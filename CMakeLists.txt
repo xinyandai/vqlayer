@@ -19,4 +19,4 @@ endif()
 
 
 link_libraries(-lpthread)
-add_executable(main main.cc)
+add_executable(main main.cc network.cpp layer.cpp)
