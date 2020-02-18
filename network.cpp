@@ -12,9 +12,6 @@ Network::Network( int *sizesOfLayers, int noOfLayers, int batchSize, float lr, i
 Network::~Network() {
 }
 
-
-
-
 int Network::predictClass(int **inputIndices, float **inputValues, int *length, int **labels, int *labelsize) {
     int correctPred = 0;
     return correctPred;

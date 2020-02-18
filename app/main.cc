@@ -16,7 +16,7 @@
 #include <map>
 #include <string>
 
-#include "network.h"
+#include "../network.h"
 
 int *RangePow;
 int *K;
