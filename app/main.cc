@@ -16,7 +16,7 @@
 #include <map>
 #include <string>
 
-#include "../network.h"
+#include "../include/network.h"
 
 int *RangePow;
 int *K;
@@ -445,11 +445,12 @@ int main(int argc, char* argv[])
   int numBatches = totRecords/Batchsize;
   int numBatchesTest = totRecordsTest/Batchsize;
 
-
+  vector<Activation > layersTypes(numLayer, Activation::ReLu);
+  layersTypes[numLayer-1] = Activation::SoftMax;
 
 
   auto t1 = std::chrono::high_resolution_clock::now();
-  Network *_mynet = new Network(sizesOfLayers, numLayer, Batchsize, Lr, InputDim, K, L, RangePow, Sparsity);
+  Network *_mynet = new Network(sizesOfLayers, layersTypes, numLayer, Batchsize, Lr, InputDim, K, L, RangePow, Sparsity);
   auto t2 = std::chrono::high_resolution_clock::now();
   float timeDiffInMiliseconds = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
   std::cout << "Network Initialization takes " << timeDiffInMiliseconds/1000 << " milliseconds" << std::endl;

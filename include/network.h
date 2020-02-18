@@ -1,0 +1,25 @@
+#pragma once
+#include <chrono>
+#include <vector>
+#include "iostream"
+#include "layer.h"
+
+using namespace std;
+
+
+class Network {
+ public:
+  Network(int* sizesOfLayers, const vector<Activation >& layersTypes, int noOfLayers, int batchsize, float lr, int inputdim, int* K, int* L, int* RangePow, float* Sparsity);
+  int predictClass(int ** inputIndices, float ** inputValues, int * length, int ** labels, int *labelsize);
+  float ProcessInput(int** inputIndices, float** inputValues, int* lengths, int ** label, int *labelsize, int iter);
+  void saveWeights(string file);
+  ~Network();
+ private:
+  size_type              batch_size_;
+  size_type              num_layers_;
+  size_type              input_dim_;
+  size_type*             layer_size_;
+  std::vector<Layer>     layer_;
+  Optimizer              optimizer_;
+};
+
