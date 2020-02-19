@@ -4,6 +4,7 @@
 //
 
 #pragma once
+#include <algorithm>
 #include <vector>
 #include <memory>
 
@@ -31,9 +32,22 @@ class SparseVector {
 
   SparseVector(const SparseVector& s) = default;
   SparseVector(SparseVector&& s) = default;
+  SparseVector(const vector<T>& s): index_(s.size()), value_(s) {
+    std::iota(index_.begin(), index_.end(), 0);
+  };
 
   SparseVector& operator=(const SparseVector& s) = default;
   SparseVector& operator=(SparseVector&& s) = default;
+  SparseVector& operator=(const vector<T>& s) {
+    index_.resize(s.size());
+    std::iota(index_.begin(), index_.end(), 0);
+    value_ = s;
+  };
+  SparseVector& operator=(vector<T >&& s) {
+    index_.resize(s.size());
+    std::iota(index_.begin(), index_.end(), 0);
+    value_ = s;
+  };
 
   void clear() {
     index_.clear();
@@ -64,6 +78,10 @@ class Layer {
   Layer(size_type I, size_type O, Activation type);
   ~Layer() ;
 
+  const T* weight() { return weight_; }
+  const T* bias() { return bias_; }
+
+  void initialize(const vector<T >& w, const vector<T >& b);
   /**
    * \brief y = \sigma(xW + b)
    * \param x Sparse Vector
@@ -88,7 +106,6 @@ class Layer {
                         const SparseVector& x,
                         const Optimizer& optimizer,
                         bool compute_gx);
-
  private:
   size_type  I_;
   size_type  O_;

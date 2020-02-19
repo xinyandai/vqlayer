@@ -21,7 +21,7 @@ link_libraries(-lpthread ${BLAS_LIBRARIES})
 
 add_executable(main app/main.cc src/network.cpp src/layer.cc)
 
-#set(test_set  mm)
-#foreach(test  ${test_set})
-#    add_executable(test_${test} test/test_${test}.cc )
-#endforeach()
+set(test_set  smm)
+foreach(test  ${test_set})
+    add_executable(test_${test} test/test_${test}.cc src/layer.cc)
+endforeach()
