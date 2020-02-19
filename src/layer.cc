@@ -11,7 +11,11 @@
 Layer::Layer(size_type I, size_type O, Activation type)
 : I_(I), O_(O), type_(type) {
   weight_ = new T[I * O];
+  if (weight_==nullptr)
+    throw std::runtime_error("Failed to allocate memory for weight");
   bias_ = new T[O];
+  if (bias_==nullptr)
+    throw std::runtime_error("Failed to allocate memory for bias");
 }
 
 Layer::~Layer() {
@@ -45,6 +49,9 @@ SparseVector Layer::forward(const SparseVector& x) {
     T mm = bias_[o];
     for (int s = 0; s < x.size(); ++s) {
       size_type i = x.index_[s];
+      std::cout << "I_: " << I_ << "(" << i << ") "
+                << "O_: " << O_ << "(" << o << ") "
+                << std::endl << std::flush;
       mm += x.value_[s] * weight_[O_ * i + o];
     }
     if (mm > threshold) {
