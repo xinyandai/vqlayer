@@ -38,7 +38,7 @@ float Network::ProcessInput(int **inputIndices, float **inputValues,
     vector<SparseVector > activations ((size_t)num_layers_ + 1);
     // construct from input
     activations[0] = SparseVector(inputIndices[b], inputValues[b], lengths[b]);
-    vector<int > labels_(labels_[b], labels_[b]+labelsize[b]);
+    vector<int > labels_(labels[b], labels[b]+labelsize[b]);
     // forward pass for one sample
     for (int i = 0; i < num_layers_; ++i) {
       activations[i+1] = layer_[i].forward(activations[i]) ;

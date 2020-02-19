@@ -3,7 +3,10 @@
 //
 
 #include <cmath>
+#include <iostream>
+#include <numeric>
 #include <limits>
+#include <cstring>
 #include "../include/layer.h"
 
 Layer::Layer(size_type I, size_type O, Activation type)
@@ -17,6 +20,17 @@ Layer::~Layer() {
   delete [] bias_;
 }
 
+void Layer::initialize(const vector<T >& w, const vector<T >& b) {
+  if (w.size() != I_ * O_) {
+    throw std::runtime_error("Weight size not matched! ");
+  }
+  if (b.size() != O_) {
+    throw std::runtime_error("Bias size not matched! ");
+  }
+  std::memcpy(weight_, w.data(), w.size() * sizeof(T));
+  std::memcpy(bias_, b.data(), b.size() * sizeof(T));
+}
+
 /**
  * \brief y = \sigma(xW + b)
  * \param x Sparse Vector
@@ -27,17 +41,18 @@ SparseVector Layer::forward(const SparseVector& x) {
   // Relu activation remove the negative output
   // SoftMax activation remove the extremely small output
   T threshold = (type_ == Activation::ReLu) ? 0.f : -1e10f;
-  T max_v = -std::numeric_limits<T>::min();
+  T max_v = threshold;
   for (int o = 0; o < O_; ++o) {
-    T mm = 0;
+    T mm = bias_[o];
     for (int s = 0; s < x.size(); ++s) {
       size_type i = x.index_[s];
-      mm += * (weight_ + O_ * x.index_[i] + o);
+      mm += x.value_[s] * weight_[O_ * i + o];
     }
-    if (mm > threshold)
+    if (mm > threshold) {
       y.push_back(o, mm);
-    if (mm > max_v)
-      max_v = mm;
+      if (mm > max_v)
+        max_v = mm;
+    }
   }
   // Compute SoftMax, see @link{https://deepnotes.io/softmax-crossentropy}
   // TODO replace expensive log operation with lookup table
@@ -69,26 +84,11 @@ SparseVector Layer::forward(const SparseVector& x) {
  * \param compute_gx should compute gradient with respect to x
  * \return gradient with respect to x
  */
-SparseVector Layer::backward(const SparseVector& g,
-                      const SparseVector& x,
-                      const Optimizer& optimizer,
-                      bool compute_gx) {
+SparseVector Layer::backward( const SparseVector& g,
+                              const SparseVector& x,
+                              const Optimizer& optimizer,
+                              bool compute_gx ) {
   T lr = optimizer.lr;
-  // compute gradient and update with respect to the weight
-  // gw[I_, O_] = g[O_] @ x[I_]
-  for (int i = 0; i < x.size(); ++i) {
-    T* w = weight_ + O_ * x.index_[i];
-    for (int o = 0; o < g.size(); ++o) {
-      T grad = x.value_[i] * g.value_[o];
-      w[g.index_[o]] -= lr * grad;
-    }
-  }
-  // update bias (gradient of bias is equivalent to g)
-  for (int i = 0; i < g.size(); ++i) {
-    T grad = g.value_[i];
-    bias_[g.index_[i]] -= lr * grad;
-  }
-
   SparseVector gx;
   if (compute_gx) {
     // Compute gradient  with respect to the input:
@@ -106,6 +106,22 @@ SparseVector Layer::backward(const SparseVector& g,
       gx.value_[i] = grad;
     }
   }
+
+  // compute gradient and update with respect to the weight
+  // gw[I_, O_] = x[1, I_]' g[1, O_]
+  for (int i = 0; i < x.size(); ++i) {
+    T* w = weight_ + O_ * x.index_[i];
+    for (int o = 0; o < g.size(); ++o) {
+      T grad = x.value_[i] * g.value_[o];
+      w[g.index_[o]] -= lr * grad;
+    }
+  }
+  // update bias (gradient of bias is equivalent to g)
+  for (int i = 0; i < g.size(); ++i) {
+    T grad = g.value_[i];
+    bias_[g.index_[i]] -= lr * grad;
+  }
+
   return gx;
 }
 
