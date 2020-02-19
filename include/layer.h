@@ -79,6 +79,9 @@ class Layer {
   Layer(size_type I, size_type O, Activation type);
   ~Layer() ;
 
+  Layer(const Layer& l);
+  Layer(Layer&& l);
+
   const T* weight() { return weight_; }
   const T* bias() { return bias_; }
 

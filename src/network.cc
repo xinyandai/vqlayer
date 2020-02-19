@@ -15,6 +15,7 @@ Network::Network( int *sizesOfLayers, vector<Activation >& layersTypes,
   batch_size_ = batchSize;
   input_dim_ = inputdim;
   optimizer_.lr = lr;
+  layer_.reserve(num_layers_);
   layer_.emplace_back(input_dim_, layer_size_[0], layersTypes[0]);
   for (int i = 1; i < num_layers_; ++i) {
     layer_.emplace_back(layer_size_[i-1], layer_size_[i], layersTypes[i]);
