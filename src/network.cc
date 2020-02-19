@@ -1,6 +1,7 @@
 #include <iostream>
 #include <math.h>
 #include <algorithm>
+#include <limits>
 #include <omp.h>
 #include "../include/network.h"
 using namespace std;
@@ -25,16 +26,43 @@ Network::Network( int *sizesOfLayers, vector<Activation >& layersTypes,
 Network::~Network() = default;
 
 int Network::predictClass(int **inputIndices, float **inputValues,
-                          int *length, int **labels, int *labelsize) {
-    int correctPred = 0;
-    return correctPred;
+                          int *lengths, int **labels, int *labelsize) {
+  std::cout << "predict \t";
+  int correctPred = 0;
+
+#pragma omp parallel for reduction(+:correctPred)
+  for (int b = 0; b < batch_size_; ++b) {
+    // construct from input
+    SparseVector activation = SparseVector(inputIndices[b], inputValues[b], lengths[b]);
+    vector<int > labels_(labels[b], labels[b]+labelsize[b]);
+    // forward pass for one sample
+    for (int i = 0; i < num_layers_; ++i) {
+      activation = layer_[i].forward(activation) ;
+    }
+    T max_act = std::numeric_limits<float >::min();
+    int predict_class = activation.index_[0];
+    for (int k = 0; k < activation.size(); k++) {
+      T cur_act = activation.value_[k];
+      if (max_act < cur_act) {
+        max_act = cur_act;
+        predict_class = activation.index_[k];
+      }
+    }
+
+    if (std::find (labels[b], labels[b]+labelsize[b], predict_class)!= labels[b]+labelsize[b]) {
+      correctPred++;
+    }
+  }
+  return correctPred;
 }
 
 
 float Network::ProcessInput(int **inputIndices, float **inputValues,
                             int *lengths, int **labels,
                             int *labelsize, int iter) {
+  std::cout << "training\t";
   float loss = 0;
+#pragma omp parallel for reduction(+:loss)
   for (int b = 0; b < batch_size_; ++b) {
     vector<SparseVector > activations ((size_t)num_layers_ + 1);
     // construct from input
@@ -56,6 +84,7 @@ float Network::ProcessInput(int **inputIndices, float **inputValues,
       activations[i].clear();
     }
   }
+  std::cout << loss << std::endl;
   return loss;
 }
 
