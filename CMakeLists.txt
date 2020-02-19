@@ -19,7 +19,7 @@ endif()
 
 link_libraries(-lpthread ${BLAS_LIBRARIES})
 
-add_executable(main app/main.cc src/network.cpp src/layer.cc)
+add_executable(main app/main.cc src/network.cc src/layer.cc)
 
 set(test_set  smm)
 foreach(test  ${test_set})
