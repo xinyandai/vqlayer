@@ -54,24 +54,33 @@ void Layer::initialize(const vector<T >& w, const vector<T >& b) {
 SparseVector Layer::forward(const SparseVector& x) {
   SparseVector y;
   // Relu activation remove the negative output
-  // SoftMax activation remove the extremely small output
-  T threshold = (type_ == Activation::ReLu) ? 0.f : -1e10f;
-  T max_v = threshold;
-  for (int o = 0; o < O_; ++o) {
-    T mm = bias_[o];
-    for (int s = 0; s < x.size(); ++s) {
-      size_type i = x.index_[s];
-      mm += x.value_[s] * weight_[O_ * i + o];
+  if (type_ == Activation::ReLu) {
+    for (int o = 0; o < O_; ++o) {
+      T mm = bias_[o];
+      for (int s = 0; s < x.size(); ++s) {
+        size_type i = x.index_[s];
+        mm += x.value_[s] * weight_[O_ * i + o];
+      }
+      if (mm > 0) {
+        y.push_back(o, mm);
+      }
     }
-    if (mm > threshold) {
+  }
+
+  // Compute SoftMax, see @link{https://deepnotes.io/softmax-crossentropy}
+  // TODO replace expensive log operation with lookup table
+  else if (type_ == Activation::SoftMax) {
+    T max_v = std::numeric_limits<T>::min();
+    for (int o = 0; o < O_; ++o) {
+      T mm = bias_[o];
+      for (int s = 0; s < x.size(); ++s) {
+        size_type i = x.index_[s];
+        mm += x.value_[s] * weight_[O_ * i + o];
+      }
       y.push_back(o, mm);
       if (mm > max_v)
         max_v = mm;
     }
-  }
-  // Compute SoftMax, see @link{https://deepnotes.io/softmax-crossentropy}
-  // TODO replace expensive log operation with lookup table
-  if (type_ == Activation::SoftMax) {
     // C is a constant for computation stability
     const T C = -max_v;
     T sum = 0;
