@@ -108,11 +108,11 @@ class Layer {
                         const Optimizer& optimizer,
                         bool compute_gx);
  private:
-  size_type  I_;
-  size_type  O_;
-  Activation type_;
-  T*         weight_;
-  T*         bias_;
+  const size_type  I_;
+  const size_type  O_;
+  const Activation type_;
+  T*               weight_;
+  T*               bias_;
 };
 
 
@@ -125,5 +125,5 @@ class SoftMaxCrossEntropy {
    *         according to formula: g_i = p_i - y_i
    */
   static SparseVector compute(const SparseVector& p,
-                         const vector<size_type >& y, T* loss) ;
+                              const vector<size_type >& y, T* loss);
 };

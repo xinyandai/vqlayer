@@ -437,7 +437,7 @@ int main(int argc, char* argv[])
   //***********************************
   // Parse Config File
   //***********************************
-  parseconfig(argv[1]);
+  parseconfig(argc > 1 ? argv[1]  : "amazon.cfg");
 
   //***********************************
   // Initialize Network
