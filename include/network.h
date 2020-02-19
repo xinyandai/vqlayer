@@ -9,7 +9,7 @@ using namespace std;
 
 class Network {
  public:
-  Network(int* sizesOfLayers, const vector<Activation >& layersTypes, int noOfLayers, int batchsize, float lr, int inputdim, int* K, int* L, int* RangePow, float* Sparsity);
+  Network(int* sizesOfLayers, vector<Activation >& layersTypes, int noOfLayers, int batchsize, float lr, int inputdim, int* K, int* L, int* RangePow, float* Sparsity);
   int predictClass(int ** inputIndices, float ** inputValues, int * length, int ** labels, int *labelsize);
   float ProcessInput(int** inputIndices, float** inputValues, int* lengths, int ** label, int *labelsize, int iter);
   void saveWeights(string file);

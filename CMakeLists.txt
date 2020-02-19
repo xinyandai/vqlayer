@@ -14,14 +14,14 @@ if (OPENMP_FOUND)
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
-find_package( BLAS REQUIRED )
-message( STATUS BLAS found: ${BLAS_LIBRARIES} )
+#find_package( BLAS REQUIRED )
+#message( STATUS BLAS found: ${BLAS_LIBRARIES} )
 
 link_libraries(-lpthread ${BLAS_LIBRARIES})
 
-add_executable(main app/main.cc network.cpp src/vqlayer.cc)
+add_executable(main app/main.cc src/network.cpp src/layer.cc)
 
-set(test_set  mm)
-foreach(test  ${test_set})
-    add_executable(test_${test} test/test_${test}.cc )
-endforeach()
+#set(test_set  mm)
+#foreach(test  ${test_set})
+#    add_executable(test_${test} test/test_${test}.cc )
+#endforeach()

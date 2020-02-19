@@ -408,7 +408,7 @@ void ReadDataSVM(int numBatches,  Network* _mynet, int epoch){
     auto t1 = std::chrono::high_resolution_clock::now();
 
 
-    auto logloss = _mynet->ProcessInput(records, values, sizes, labels, labelsize, epoch * numBatches + i);
+    auto loss = _mynet->ProcessInput(records, values, sizes, labels, labelsize, epoch * numBatches + i);
 
     auto t2 = std::chrono::high_resolution_clock::now();
 
