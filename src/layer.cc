@@ -105,8 +105,10 @@ SparseVector Layer::forward(const SparseVector& x) {
       v = std::exp(v+C);
       sum += v;
     }
-    for (auto& v : y.value_) {
-      v = v / sum;
+    if (sum > 0) {
+      for (auto& v : y.value_) {
+        v = v / sum;
+      }
     }
   }
   return y;
@@ -189,7 +191,8 @@ SparseVector SoftMaxCrossEntropy:: compute(
     size_type i_p = 0;
     size_type i_y = 0;
     while (i_p < p.size() && i_y < y.size()) {
-      if (p.index_[i_p] == y[i_y]) {
+  //  std::cout << "y_i " << y_prob << " p_i " << p.value_[i_p]  << " log(p_i) "<<  std::log(p.value_[i_p]) << std::endl;
+    if (p.index_[i_p] == y[i_y]) {
         loss_ += y_prob * std::log(p.value_[i_p]);
         i_p++, i_y++;
       } else if (p.index_[i_p] < y[i_y]){

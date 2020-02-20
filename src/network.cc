@@ -60,7 +60,7 @@ int Network::predictClass(int **inputIndices, float **inputValues,
 float Network::ProcessInput(int **inputIndices, float **inputValues,
                             int *lengths, int **labels,
                             int *labelsize, int iter) {
-  std::cout << "training\t";
+// std::cout << "training\t";
   float loss = 0;
 #pragma omp parallel for reduction(+:loss)
   for (int b = 0; b < batch_size_; ++b) {
@@ -84,7 +84,7 @@ float Network::ProcessInput(int **inputIndices, float **inputValues,
       activations[i].clear();
     }
   }
-  std::cout << loss << std::endl;
+//  std::cout << loss << std::endl;
   return loss;
 }
 
