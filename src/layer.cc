@@ -68,7 +68,7 @@ SparseVector Layer::forward(const SparseVector& x) {
   }
 
   // Compute SoftMax, see @link{https://deepnotes.io/softmax-crossentropy}
-  // TODO replace expensive log operation with lookup table
+  // TODO replace expensive std::exp operation with lookup table
   else if (type_ == Activation::SoftMax) {
     T max_v = std::numeric_limits<T>::min();
     for (int o = 0; o < O_; ++o) {
@@ -85,7 +85,7 @@ SparseVector Layer::forward(const SparseVector& x) {
     const T C = -max_v;
     T sum = 0;
     for (auto& v : y.value_) {
-      v = std::log(v+C);
+      v = std::exp(v+C);
       sum += v;
     }
     for (auto& v : y.value_) {
@@ -181,7 +181,7 @@ SparseVector SoftMaxCrossEntropy:: compute(
         i_y++;
       }
     }
-    *loss = loss_;
+    *loss = -loss_;
   }
 
   size_type i_p = 0;
