@@ -3,9 +3,10 @@
 //
 
 #include <cmath>
+#include <cstring>
 #include <iostream>
 #include <limits>
-#include <cstring>
+#include <random>
 #include "../include/layer.h"
 
 Layer::Layer(size_type I, size_type O, Activation type)
@@ -21,7 +22,9 @@ Layer::Layer(size_type I, size_type O, Activation type)
 Layer::Layer(const Layer& c) : Layer(c.I_, c.O_, c.type_) {
   std::memcpy(weight_, c.weight_, I_ * O_);
   std::memcpy(bias_, c.bias_,  O_);
+  initialize();
 }
+
 Layer::Layer(Layer&& c) : I_(c.I_), O_(c.O_), type_(c.type_),
                           weight_(c.weight_), bias_(c.bias_) {
   c.weight_ = NULL;
@@ -46,6 +49,20 @@ void Layer::initialize(const vector<T >& w, const vector<T >& b) {
   std::memcpy(bias_, b.data(), b.size() * sizeof(T));
 }
 
+void Layer::initialize() {
+  std::default_random_engine generator(1216);
+  std::uniform_real_distribution<T > distribution(0.0, 1.0 / std::sqrt(I_ / 2.0));
+  T* w = weight_;
+  for (int i = 0; i < I_; i++) {
+    for (int j = 0; j < O_; j++) {
+      *(w++) = distribution(generator);
+    }
+  }
+  T* b = bias_;
+  for (int o = 0; o < O_; ++o) {
+    *(b++) = distribution(generator);
+  }
+}
 /**
  * \brief y = \sigma(xW + b)
  * \param x Sparse Vector

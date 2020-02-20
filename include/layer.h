@@ -86,6 +86,7 @@ class Layer {
   const T* bias() { return bias_; }
 
   void initialize(const vector<T >& w, const vector<T >& b);
+  void initialize();
   /**
    * \brief y = \sigma(xW + b)
    * \param x Sparse Vector
