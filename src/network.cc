@@ -27,7 +27,7 @@ Network::~Network() = default;
 
 int Network::predictClass(int **inputIndices, float **inputValues,
                           int *lengths, int **labels, int *labelsize) {
-  std::cout << "predict \t";
+//  std::cout << "predict \t";
   int correctPred = 0;
 
 #pragma omp parallel for reduction(+:correctPred)
