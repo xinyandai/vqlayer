@@ -17,12 +17,12 @@ Layer::Layer(size_type I, size_type O, Activation type)
   bias_ = new T[O];
   if (bias_==nullptr)
     throw std::runtime_error("Failed to allocate memory for bias");
+  initialize();
 }
 
 Layer::Layer(const Layer& c) : Layer(c.I_, c.O_, c.type_) {
   std::memcpy(weight_, c.weight_, I_ * O_);
   std::memcpy(bias_, c.bias_,  O_);
-  initialize();
 }
 
 Layer::Layer(Layer&& c) : I_(c.I_), O_(c.O_), type_(c.type_),
