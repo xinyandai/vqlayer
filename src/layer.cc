@@ -10,7 +10,7 @@
 #include "../include/layer.h"
 
 Layer::Layer(size_type I, size_type O, Activation type)
-: I_(I), O_(O), type_(type) {
+: I_(I), O_(O), type_(type), weight_lock_(I), bias_lock_(O) {
   weight_ = new T[I * O];
   if (weight_==nullptr)
     throw std::runtime_error("Failed to allocate memory for weight");
@@ -26,7 +26,8 @@ Layer::Layer(const Layer& c) : Layer(c.I_, c.O_, c.type_) {
 }
 
 Layer::Layer(Layer&& c) : I_(c.I_), O_(c.O_), type_(c.type_),
-                          weight_(c.weight_), bias_(c.bias_) {
+                          weight_(c.weight_), bias_(c.bias_),
+                          weight_lock_(c.I_), bias_lock_(c.O_) {
   c.weight_ = NULL;
   c.bias_ = NULL;
 }
@@ -70,13 +71,15 @@ void Layer::initialize() {
  */
 SparseVector Layer::forward(const SparseVector& x) {
   SparseVector y;
+  volatile T* weight = weight_;
+  volatile T* bias = bias_;
   // Relu activation remove the negative output
   if (type_ == Activation::ReLu) {
     for (int o = 0; o < O_; ++o) {
-      T mm = bias_[o];
+      T mm = bias[o];
       for (int s = 0; s < x.size(); ++s) {
         size_type i = x.index_[s];
-        mm += x.value_[s] * weight_[O_ * i + o];
+        mm += x.value_[s] * weight[O_ * i + o];
       }
       if (mm > 0) {
         y.push_back(o, mm);
@@ -89,10 +92,10 @@ SparseVector Layer::forward(const SparseVector& x) {
   else if (type_ == Activation::SoftMax) {
     T max_v = std::numeric_limits<T>::min();
     for (int o = 0; o < O_; ++o) {
-      T mm = bias_[o];
+      T mm = bias[o];
       for (int s = 0; s < x.size(); ++s) {
         size_type i = x.index_[s];
-        mm += x.value_[s] * weight_[O_ * i + o];
+        mm += x.value_[s] * weight[O_ * i + o];
       }
       y.push_back(o, mm);
       if (mm > max_v)
@@ -133,6 +136,8 @@ SparseVector Layer::backward( const SparseVector& g,
                               bool compute_gx ) {
   T lr = optimizer.lr;
   SparseVector gx;
+  volatile T* weight = weight_;
+  volatile T* bias = bias_;
   if (compute_gx) {
     // Compute gradient  with respect to the input:
     // gx[I_] = w[I_, O_], g[O_].
@@ -140,8 +145,7 @@ SparseVector Layer::backward( const SparseVector& g,
     // since SoftMax only exist in last layer.
     gx = x;
     for (int i = 0; i < x.size(); ++i) {
-      T* w = weight_ + O_ * x.index_[i];
-
+      volatile T* w = weight + O_ * x.index_[i];
       T grad = 0;
       for (int o = 0; o < g.size(); ++o) {
         grad += g.value_[o] * w[g.index_[o]];
@@ -153,7 +157,8 @@ SparseVector Layer::backward( const SparseVector& g,
   // compute gradient and update with respect to the weight
   // gw[I_, O_] = x[1, I_]' g[1, O_]
   for (int i = 0; i < x.size(); ++i) {
-    T* w = weight_ + O_ * x.index_[i];
+    volatile T* w = weight + O_ * x.index_[i];
+    std::lock_guard<std::mutex> lock(weight_lock_[x.index_[i]]);
     for (int o = 0; o < g.size(); ++o) {
       T grad = x.value_[i] * g.value_[o];
       w[g.index_[o]] -= lr * grad;
@@ -162,7 +167,9 @@ SparseVector Layer::backward( const SparseVector& g,
   // update bias (gradient of bias is equivalent to g)
   for (int i = 0; i < g.size(); ++i) {
     T grad = g.value_[i];
-    bias_[g.index_[i]] -= lr * grad;
+    size_type index = g.index_[i];
+    std::lock_guard<std::mutex> lock(bias_lock_[index]);
+    bias[index] -= lr * grad;
   }
 
   return gx;
@@ -191,8 +198,7 @@ SparseVector SoftMaxCrossEntropy:: compute(
     size_type i_p = 0;
     size_type i_y = 0;
     while (i_p < p.size() && i_y < y.size()) {
-  //  std::cout << "y_i " << y_prob << " p_i " << p.value_[i_p]  << " log(p_i) "<<  std::log(p.value_[i_p]) << std::endl;
-    if (p.index_[i_p] == y[i_y]) {
+      if (p.index_[i_p] == y[i_y]) {
         loss_ += y_prob * std::log(p.value_[i_p]);
         i_p++, i_y++;
       } else if (p.index_[i_p] < y[i_y]){

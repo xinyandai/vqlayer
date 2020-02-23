@@ -8,7 +8,10 @@
 #include <vector>
 #include <memory>
 #include <numeric>
+#include <mutex>
+#include <thread>
 
+using std::mutex;
 using std::vector;
 using std::shared_ptr;
 
@@ -117,6 +120,8 @@ class Layer {
   const Activation type_;
   T*               weight_;
   T*               bias_;
+  vector<mutex >   weight_lock_;
+  vector<mutex >   bias_lock_;
 };
 
 
