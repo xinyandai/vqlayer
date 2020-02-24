@@ -23,5 +23,6 @@ script:
   - mkdir build
   - cd build
   - cmake ..
-  - make
+  - make main
+  - make test_smm
   - ./test_smm
