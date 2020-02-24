@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 2.8)
 project(string_search)
 
 #SET( CMAKE_CXX_FLAGS
@@ -16,8 +16,7 @@ endif()
 
 #find_package( BLAS REQUIRED )
 #message( STATUS BLAS found: ${BLAS_LIBRARIES} )
-
-link_libraries(-lpthread ${BLAS_LIBRARIES})
+#link_libraries(-lpthread ${BLAS_LIBRARIES})
 
 add_executable(main app/main.cc src/network.cc src/layer.cc)
 
