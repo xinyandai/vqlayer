@@ -11,6 +11,8 @@
 #include <mutex>
 #include <thread>
 
+//#define ThreadSafe
+
 using std::mutex;
 using std::vector;
 using std::shared_ptr;
@@ -120,8 +122,10 @@ class Layer {
   const Activation type_;
   T*               weight_;
   T*               bias_;
+#ifdef ThreadSafe
   vector<mutex >   weight_lock_;
   vector<mutex >   bias_lock_;
+#endif
 };
 
 
