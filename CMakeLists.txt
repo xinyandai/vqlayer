@@ -4,7 +4,7 @@ project(vqlayer)
 #SET( CMAKE_CXX_FLAGS
 #        "${CMAKE_CXX_FLAGS} -Ofast -lrt -lm -DNDEBUG -std=c++17 -DHAVE_CXX0X -openmp -march=native -mtune=generic -fpic -w -fopenmp -ftree-vectorize -ftree-vectorizer-verbose=0" )
 SET( CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -Ofast -lm -DNDEBUG -std=c++17 -DHAVE_CXX0X -openmp -march=native -mtune=generic -fpic -w -fopenmp -ftree-vectorize -ftree-vectorizer-verbose=0" )
+        "${CMAKE_CXX_FLAGS} -Ofast -lm -DNDEBUG -std=c++17 -DHAVE_CXX0X -openmp -mtune=generic -fpic -w -fopenmp -ftree-vectorize -ftree-vectorizer-verbose=0" )
 
 find_package( PkgConfig )
 
