@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(string_search)
+project(vqlayer)
 
 #SET( CMAKE_CXX_FLAGS
 #        "${CMAKE_CXX_FLAGS} -Ofast -lrt -lm -DNDEBUG -std=c++17 -DHAVE_CXX0X -openmp -march=native -mtune=generic -fpic -w -fopenmp -ftree-vectorize -ftree-vectorizer-verbose=0" )
