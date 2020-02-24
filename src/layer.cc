@@ -10,7 +10,11 @@
 #include "../include/layer.h"
 
 Layer::Layer(size_type I, size_type O, Activation type)
-: I_(I), O_(O), type_(type), weight_lock_(I), bias_lock_(O) {
+: I_(I), O_(O), type_(type)
+#ifdef ThreadSafe
+  , weight_lock_(I), bias_lock_(O)
+#endif
+{
   weight_ = new T[I * O];
   if (weight_==nullptr)
     throw std::runtime_error("Failed to allocate memory for weight");
@@ -26,8 +30,11 @@ Layer::Layer(const Layer& c) : Layer(c.I_, c.O_, c.type_) {
 }
 
 Layer::Layer(Layer&& c) : I_(c.I_), O_(c.O_), type_(c.type_),
-                          weight_(c.weight_), bias_(c.bias_),
-                          weight_lock_(c.I_), bias_lock_(c.O_) {
+                          weight_(c.weight_), bias_(c.bias_)
+#ifdef ThreadSafe
+                          ,weight_lock_(c.I_), bias_lock_(c.O_)
+#endif
+{
   c.weight_ = NULL;
   c.bias_ = NULL;
 }
@@ -158,7 +165,9 @@ SparseVector Layer::backward( const SparseVector& g,
   // gw[I_, O_] = x[1, I_]' g[1, O_]
   for (int i = 0; i < x.size(); ++i) {
     volatile T* w = weight + O_ * x.index_[i];
+#ifdef ThreadSafe
     std::lock_guard<std::mutex> lock(weight_lock_[x.index_[i]]);
+#endif
     for (int o = 0; o < g.size(); ++o) {
       T grad = x.value_[i] * g.value_[o];
       w[g.index_[o]] -= lr * grad;
@@ -168,7 +177,9 @@ SparseVector Layer::backward( const SparseVector& g,
   for (int i = 0; i < g.size(); ++i) {
     T grad = g.value_[i];
     size_type index = g.index_[i];
+#ifdef ThreadSafe
     std::lock_guard<std::mutex> lock(bias_lock_[index]);
+#endif
     bias[index] -= lr * grad;
   }
 
