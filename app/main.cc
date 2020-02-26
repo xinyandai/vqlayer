@@ -23,7 +23,7 @@ int *K;
 int *L;
 float *Sparsity;
 
-
+bool has_header = true;
 int Batchsize = 1000;
 int Rehash = 1000;
 int Rebuild = 1000;
@@ -218,6 +218,11 @@ void parseconfig(string filename)
     {
       savedWeights = trim(second).c_str();
     }
+    else if (trim(first) == "SkipHeader")
+    {
+      string str = trim(second).c_str();
+      has_header = atoi(str.c_str()) > 0;
+    }
     else
     {
       cout << "Error Parsing conf File at Line" << endl;
@@ -232,7 +237,8 @@ void EvalDataSVM(int numBatchesTest,  Network* _mynet, int iter){
   std::ifstream testfile(testData);
   string str;
   //Skipe header
-  std::getline( testfile, str );
+  if (has_header)
+    std::getline( testfile, str );
 
   ofstream outputFile(logFile,  std::ios_base::app);
   for (size_t i = 0; i < numBatchesTest; i++) {
@@ -334,7 +340,8 @@ void ReadDataSVM(int numBatches,  Network* _mynet, int epoch){
   float accumlogss = 0;
   std::string str;
   //skipe header
-  std::getline( file, str );
+  if (has_header)
+    std::getline( file, str );
   int totalTime = 0;
   for (size_t i = 0; i < numBatches; i++) {
 
@@ -448,7 +455,7 @@ int main(int argc, char* argv[])
 
 
   auto t1 = std::chrono::high_resolution_clock::now();
-  Optimizer optimizer = {0.1}; // TODO modify config file later
+  Optimizer optimizer = {Lr}; // TODO modify config file later
   Network *_mynet = new Network(sizesOfLayers, layersTypes, numLayer, Batchsize, optimizer, InputDim, K, L, RangePow, Sparsity);
   auto t2 = std::chrono::high_resolution_clock::now();
   float timeDiffInMiliseconds = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
@@ -459,11 +466,13 @@ int main(int argc, char* argv[])
   //***********************************
 
   const int schedule_epoch = Epoch / 5;
+  EvalDataSVM(numBatchesTest, _mynet, 0);
   for (int e=0; e< Epoch; e++) {
     ofstream outputFile(logFile,  std::ios_base::app);
     outputFile<<"Epoch "<<e<<endl;
-    if (e > 0 && e % schedule_epoch == 0) {
+    if (e > 0 && (e % schedule_epoch == 0)) {
       optimizer.lr /= 3.0;
+      std::cout << "Epoch: " << e << " lr: " << optimizer.lr << "\n";
     }
     // train
     ReadDataSVM(numBatches, _mynet, e);
