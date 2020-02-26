@@ -465,7 +465,7 @@ int main(int argc, char* argv[])
     ofstream outputFile(logFile,  std::ios_base::app);
     outputFile<<"Epoch "<<e<<endl;
     if (e > 0 && e % schedule_epoch == 0) {
-      .lr /= 3.0;
+      optimizer.lr /= 3.0;
     }
     // train
     ReadDataSVM(numBatches, _mynet, e);
