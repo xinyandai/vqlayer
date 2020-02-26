@@ -9,9 +9,10 @@ using namespace std;
 
 class Network {
  public:
-  Network(int* sizesOfLayers, vector<Activation >& layersTypes, int noOfLayers, int batchsize, float lr, int inputdim, int* K, int* L, int* RangePow, float* Sparsity);
+  Network(int* sizesOfLayers, vector<Activation >& layersTypes, int noOfLayers, int batchsize,
+      Optimizer optimizer, int inputdim, int* K, int* L, int* RangePow, float* Sparsity);
   int predictClass(int ** inputIndices, float ** inputValues, int * length, int ** labels, int *labelsize);
-  float ProcessInput(int** inputIndices, float** inputValues, int* lengths, int ** label, int *labelsize, int iter);
+  float ProcessInput(int** inputIndices, float** inputValues, int* lengths, int ** label, int *labelsize);
   void saveWeights(string file);
   ~Network();
  private:
@@ -20,6 +21,6 @@ class Network {
   size_type              input_dim_;
   size_type*             layer_size_;
   std::vector<Layer>     layer_;
-  Optimizer              optimizer_;
+  const Optimizer&       optimizer_;
 };
 

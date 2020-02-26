@@ -8,14 +8,13 @@ using namespace std;
 
 
 Network::Network( int *sizesOfLayers, vector<Activation >& layersTypes,
-                  int noOfLayers, int batchSize, float lr,
+                  int noOfLayers, int batchSize, Optimizer optimizer,
                   int inputdim, int* K, int* L, int*
-                  RangePow, float* Sparsity) {
+                  RangePow, float* Sparsity) : optimizer_(optimizer){
   layer_size_ = sizesOfLayers;
   num_layers_ = noOfLayers;
   batch_size_ = batchSize;
   input_dim_ = inputdim;
-  optimizer_.lr = lr;
   layer_.reserve(num_layers_);
   layer_.emplace_back(input_dim_, layer_size_[0], layersTypes[0]);
   for (int i = 1; i < num_layers_; ++i) {
@@ -59,7 +58,7 @@ int Network::predictClass(int **inputIndices, float **inputValues,
 
 float Network::ProcessInput(int **inputIndices, float **inputValues,
                             int *lengths, int **labels,
-                            int *labelsize, int iter) {
+                            int *labelsize) {
 // std::cout << "training\t";
   float loss = 0;
 #pragma omp parallel for reduction(+:loss)

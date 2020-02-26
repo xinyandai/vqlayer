@@ -408,7 +408,7 @@ void ReadDataSVM(int numBatches,  Network* _mynet, int epoch){
     auto t1 = std::chrono::high_resolution_clock::now();
 
 
-    auto loss = _mynet->ProcessInput(records, values, sizes, labels, labelsize, epoch * numBatches + i);
+    auto loss = _mynet->ProcessInput(records, values, sizes, labels, labelsize);
 
     auto t2 = std::chrono::high_resolution_clock::now();
 
@@ -450,7 +450,8 @@ int main(int argc, char* argv[])
 
 
   auto t1 = std::chrono::high_resolution_clock::now();
-  Network *_mynet = new Network(sizesOfLayers, layersTypes, numLayer, Batchsize, Lr, InputDim, K, L, RangePow, Sparsity);
+  Optimizer optimizer = {0.1}; // TODO modify config file later
+  Network *_mynet = new Network(sizesOfLayers, layersTypes, numLayer, Batchsize, optimizer, InputDim, K, L, RangePow, Sparsity);
   auto t2 = std::chrono::high_resolution_clock::now();
   float timeDiffInMiliseconds = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
   std::cout << "Network Initialization takes " << timeDiffInMiliseconds/1000 << " milliseconds" << std::endl;
@@ -459,18 +460,17 @@ int main(int argc, char* argv[])
   // Start Training
   //***********************************
 
+  const int schedule_epoch = Epoch / 5;
   for (int e=0; e< Epoch; e++) {
     ofstream outputFile(logFile,  std::ios_base::app);
     outputFile<<"Epoch "<<e<<endl;
+    if (e > 0 && e % schedule_epoch == 0) {
+      .lr /= 3.0;
+    }
     // train
     ReadDataSVM(numBatches, _mynet, e);
-
     // test
-    if(e==Epoch-1) {
-      EvalDataSVM(numBatchesTest, _mynet, (e+1)*numBatches);
-    }else{
-      EvalDataSVM(50, _mynet, (e+1)*numBatches);
-    }
+    EvalDataSVM(numBatchesTest, _mynet, (e+1)*numBatches);
     _mynet->saveWeights(savedWeights);
 
   }
