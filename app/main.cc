@@ -337,9 +337,7 @@ void ReadDataSVM(int numBatches,  Network* _mynet, int epoch){
   std::getline( file, str );
   int totalTime = 0;
   for (size_t i = 0; i < numBatches; i++) {
-    if((i+epoch*numBatches)%Stepsize==0) {
-      EvalDataSVM(20, _mynet, epoch*numBatches+i);
-    }
+
     int **records = new int *[Batchsize];
     float **values = new float *[Batchsize];
     int *sizes = new int[Batchsize];
