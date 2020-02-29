@@ -80,7 +80,7 @@ float Network::ProcessInput(int **inputIndices, float **inputValues,
     // backward and update
     for (int i = num_layers_-1; i >= 0; --i) {
       if (grad.size() == 0) {
-        std::cerr << "No gradient Since Layer " << 1 + i << std::endl;
+        // std::cerr << "No gradient Since Layer " << 1 + i << std::endl;
         break;
       }
       grad = layer_[i].backward(grad, activations[i], optimizer_, i!=0);
