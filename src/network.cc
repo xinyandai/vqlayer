@@ -8,7 +8,7 @@ using namespace std;
 
 
 Network::Network( int *sizesOfLayers, vector<Activation >& layersTypes,
-                  int noOfLayers, int batchSize, Optimizer optimizer,
+                  int noOfLayers, int batchSize, const Optimizer& optimizer,
                   int inputdim, int* K, int* L, int*
                   RangePow, float* Sparsity) : optimizer_(optimizer){
   layer_size_ = sizesOfLayers;
