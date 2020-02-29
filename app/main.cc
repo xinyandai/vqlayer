@@ -17,6 +17,7 @@
 #include <string>
 
 #include "../include/network.h"
+#include "../include/progress_bar.h"
 
 int *RangePow;
 int *K;
@@ -240,8 +241,9 @@ void EvalDataSVM(int numBatchesTest,  Network* _mynet, int iter){
   if (has_header)
     std::getline( testfile, str );
 
+  ProgressBar progress_bar(numBatchesTest, "Testing");
   ofstream outputFile(logFile,  std::ios_base::app);
-  for (size_t i = 0; i < numBatchesTest; i++) {
+  for (size_t i = 0; i < numBatchesTest; i++, ++progress_bar) {
     int **records = new int *[Batchsize];
     float **values = new float *[Batchsize];
     int *sizes = new int[Batchsize];
@@ -343,7 +345,8 @@ void ReadDataSVM(int numBatches,  Network* _mynet, int epoch){
   if (has_header)
     std::getline( file, str );
   int totalTime = 0;
-  for (size_t i = 0; i < numBatches; i++) {
+  ProgressBar progress_bar(numBatches, "Training epoch " + to_string(epoch));
+  for (size_t i = 0; i < numBatches; i++, ++progress_bar) {
 
     int **records = new int *[Batchsize];
     float **values = new float *[Batchsize];
@@ -442,7 +445,7 @@ int main(int argc, char* argv[])
   //***********************************
   // Parse Config File
   //***********************************
-  parseconfig(argc > 1 ? argv[1]  : "amazon.cfg");
+  parseconfig(argc > 1 ? argv[1]  : "mnist.cfg");
 
   //***********************************
   // Initialize Network
