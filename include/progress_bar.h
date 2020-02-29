@@ -7,8 +7,11 @@
 class ProgressBar {
  public:
   ProgressBar(int len, string message): len_(len), cur_(0), star_(0) {
-    std::cout << "0%   10   20   30   40   50   60   70   80   90   100% \t " << message << std::endl
-              << "|----|----|----|----|----|----|----|----|----|----| \t " << std::endl;
+    std::cout << "0%   10   20   30   40   50   60   70   80   90   100%\t"
+              << message
+              << std::endl
+              << "|----|----|----|----|----|----|----|----|----|----|"
+              << std::endl;
   }
 
   ProgressBar& update(int i) {
