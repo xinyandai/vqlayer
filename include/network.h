@@ -20,7 +20,7 @@ class Network {
   size_type              num_layers_;
   size_type              input_dim_;
   size_type*             layer_size_;
-  std::vector<Layer>     layer_;
+  vector<AbstractLayer*> layer_;
   const Optimizer&       optimizer_;
 };
 

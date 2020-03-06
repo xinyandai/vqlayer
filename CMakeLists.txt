@@ -4,7 +4,7 @@ project(vqlayer)
 #SET( CMAKE_CXX_FLAGS
 #        "${CMAKE_CXX_FLAGS} -Ofast -lrt -lm -DNDEBUG -std=c++17 -DHAVE_CXX0X -openmp -march=native -mtune=generic -fpic -w -fopenmp -ftree-vectorize -ftree-vectorizer-verbose=0" )
 SET( CMAKE_CXX_FLAGS
-        "${CMAKE_CXX_FLAGS} -Ofast -lm -DNDEBUG -std=c++17 -DHAVE_CXX0X -openmp -mtune=generic -fpic -w -fopenmp -ftree-vectorize -ftree-vectorizer-verbose=0" )
+        "${CMAKE_CXX_FLAGS} -lm -DNDEBUG -std=c++17 -DHAVE_CXX0X -openmp -mtune=generic -fpic -w -fopenmp -ftree-vectorize -ftree-vectorizer-verbose=0" )
 
 find_package( PkgConfig )
 
@@ -17,10 +17,10 @@ endif()
 #find_package( BLAS REQUIRED )
 #message( STATUS BLAS found: ${BLAS_LIBRARIES} )
 #link_libraries(-lpthread ${BLAS_LIBRARIES})
-
-add_executable(main app/main.cc src/network.cc src/layer.cc)
+file(GLOB_RECURSE VQ_LAYER_SOURCES "src/*.cc")
+add_executable(main app/main.cc ${VQ_LAYER_SOURCES})
 
 set(test_set  smm)
 foreach(test  ${test_set})
-    add_executable(test_${test} test/test_${test}.cc src/layer.cc)
+    add_executable(test_${test} test/test_${test}.cc ${VQ_LAYER_SOURCES})
 endforeach()

@@ -40,10 +40,8 @@ Layer::Layer(Layer&& c) : I_(c.I_), O_(c.O_), type_(c.type_),
 }
 
 Layer::~Layer() {
-  if (weight_)
-    delete [] weight_;
-  if (bias_)
-    delete [] bias_;
+  delete [] weight_;
+  delete [] bias_;
 }
 
 void Layer::initialize(const vector<T >& w, const vector<T >& b) {
@@ -58,7 +56,7 @@ void Layer::initialize(const vector<T >& w, const vector<T >& b) {
 }
 
 void Layer::initialize() {
-  std::default_random_engine generator(1216);
+  std::default_random_engine generator(1016);
   std::uniform_real_distribution<T > distribution(0.0, 1.0 / std::sqrt(I_ / 2.0));
   T* w = weight_;
   for (int i = 0; i < I_; i++) {
@@ -71,11 +69,7 @@ void Layer::initialize() {
     *(b++) = distribution(generator);
   }
 }
-/**
- * \brief y = \sigma(xW + b)
- * \param x Sparse Vector
- * \return y Sparse Vector
- */
+
 SparseVector Layer::forward(const SparseVector& x) {
   SparseVector y;
   volatile T* weight = weight_;
@@ -124,19 +118,7 @@ SparseVector Layer::forward(const SparseVector& x) {
   return y;
 }
 
-/**
- * \brief calculated gradient with respect to weight and input
- *        according to formula: g_W = gx; g_b = g; g_I = gW';
- *        update the parameters with Optimization Algorithm:
- *        P -=  lr * Gradient
- * \param a current layer output activation
- * \param x sparse vector, memorize input for calculate gradient
- *        with respect to weight_
- *
- * \param g gradient with respect to the output of forward
- * \param compute_gx should compute gradient with respect to x
- * \return gradient with respect to x
- */
+
 SparseVector Layer::backward( const SparseVector& g,
                               const SparseVector& x,
                               const Optimizer& optimizer,
@@ -184,66 +166,4 @@ SparseVector Layer::backward( const SparseVector& g,
   }
 
   return gx;
-}
-
-
-/**
- * \param p SoftMax estimate
- * \param y true labels for classification task,
- * \return gradient with respect to the pre-SoftMax output
- *         according to formula: g_i = p_i - y_i
- */
-SparseVector SoftMaxCrossEntropy:: compute(
-    const SparseVector& p,
-    const vector<size_type >& y, T* loss) {
-
-
-  SparseVector grad;
-  size_t reserve_size = std::max(p.size(), y.size());
-  grad.reserve(reserve_size);
-
-  T y_prob = (T)1.0 / y.size();
-
-  if (loss) { // compute loss = Sum(yi log pi)
-    T loss_ = 0;
-    size_type i_p = 0;
-    size_type i_y = 0;
-    while (i_p < p.size() && i_y < y.size()) {
-      if (p.index_[i_p] == y[i_y]) {
-        loss_ += y_prob * std::log(p.value_[i_p]);
-        i_p++, i_y++;
-      } else if (p.index_[i_p] < y[i_y]){
-        i_p++;
-      } else {
-        i_y++;
-      }
-    }
-    *loss = -loss_;
-  }
-
-  size_type i_p = 0;
-  size_type i_y = 0;
-  // compute gradient : g_i = p_i - y_i
-  while (i_p < p.size() && i_y < y.size()) {
-    if (p.index_[i_p] == y[i_y]) {
-      grad.push_back(y[i_y], p.value_[i_p] - y_prob);
-      i_p++, i_y++;
-    } else if (p.index_[i_p] < y[i_y]){
-      grad.push_back(p.index_[i_p], p.value_[i_p]);
-      i_p++;
-    } else {
-      grad.push_back(y[i_y], - y_prob);
-      i_y++;
-    }
-  }
-  while (i_p < p.size()) {
-    grad.push_back(p.index_[i_p], p.value_[i_p]);
-    i_p++;
-  }
-  while (i_y < y.size()) {
-    grad.push_back(y[i_y], - y_prob);
-    i_y++;
-  }
-
-  return grad;
 }

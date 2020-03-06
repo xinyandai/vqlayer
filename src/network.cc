@@ -16,10 +16,13 @@ Network::Network( int *sizesOfLayers, vector<Activation >& layersTypes,
   batch_size_ = batchSize;
   input_dim_ = inputdim;
   layer_.reserve(num_layers_);
-  layer_.emplace_back(input_dim_, layer_size_[0], layersTypes[0]);
+  std::cout << "building layer " << inputdim << " x " << layer_size_[0] << std::endl;
+  layer_.emplace_back(new Layer(input_dim_, layer_size_[0], layersTypes[0]));
   for (int i = 1; i < num_layers_; ++i) {
-    layer_.emplace_back(layer_size_[i-1], layer_size_[i], layersTypes[i]);
+    std::cout << "building layer " << layer_size_[i-1] << " x " << layer_size_[i] << std::endl;
+    layer_.emplace_back(new Layer(layer_size_[i-1], layer_size_[i], layersTypes[i]));
   }
+  std::cout << "building network, done" << std::endl;
 }
 
 Network::~Network() = default;
@@ -36,7 +39,7 @@ int Network::predictClass(int **inputIndices, float **inputValues,
     vector<int > labels_(labels[b], labels[b]+labelsize[b]);
     // forward pass for one sample
     for (int i = 0; i < num_layers_; ++i) {
-      activation = layer_[i].forward(activation) ;
+      activation = layer_[i]->forward(activation) ;
     }
     T max_act = std::numeric_limits<float >::min();
     int predict_class = activation.index_[0];
@@ -69,7 +72,7 @@ float Network::ProcessInput(int **inputIndices, float **inputValues,
     vector<int > labels_(labels[b], labels[b]+labelsize[b]);
     // forward pass for one sample
     for (int i = 0; i < num_layers_; ++i) {
-      activations[i+1] = layer_[i].forward(activations[i]) ;
+      activations[i+1] = layer_[i]->forward(activations[i]) ;
     }
     // compute loss
     float loss_b = 0;
@@ -83,7 +86,7 @@ float Network::ProcessInput(int **inputIndices, float **inputValues,
         // std::cerr << "No gradient Since Layer " << 1 + i << std::endl;
         break;
       }
-      grad = layer_[i].backward(grad, activations[i], optimizer_, i!=0);
+      grad = layer_[i]->backward(grad, activations[i], optimizer_, i!=0);
       activations[i].clear();
     }
   }

@@ -74,30 +74,17 @@ class SparseVector {
   vector<T >         value_;
 };
 
-
-/***
- *
- * \brief Sparse Matrix Multiplication Layer
- */
-class Layer {
+class AbstractLayer {
  public:
-  Layer(size_type I, size_type O, Activation type);
-  ~Layer() ;
+  AbstractLayer() = default;
+  virtual ~AbstractLayer() = default;
 
-  Layer(const Layer& l);
-  Layer(Layer&& l);
-
-  const T* weight() { return weight_; }
-  const T* bias() { return bias_; }
-
-  void initialize(const vector<T >& w, const vector<T >& b);
-  void initialize();
   /**
-   * \brief y = \sigma(xW + b)
+   * \brief y = \sigma(xW + b), where sigma is the activation function
    * \param x Sparse Vector
    * \return y Sparse Vector
    */
-  SparseVector forward(const SparseVector& x);
+  virtual SparseVector forward(const SparseVector& x) = 0;
 
   /**
    * \brief calculated gradient with respect to weight and input
@@ -112,10 +99,36 @@ class Layer {
    * \param compute_gx should compute gradient with respect to x
    * \return gradient with respect to x
    */
+  virtual SparseVector backward(const SparseVector& g,
+                                const SparseVector& x,
+                                const Optimizer& optimizer,
+                                bool compute_gx)
+                                = 0;
+};
+
+/**
+ * \brief Sparse Matrix Multiplication Layer
+ */
+class Layer : public AbstractLayer {
+ public:
+  Layer(size_type I, size_type O, Activation type);
+  ~Layer() override ;
+
+  Layer(const Layer& l);
+  Layer(Layer&& l);
+
+  const T* weight() { return weight_; }
+  const T* bias() { return bias_; }
+
+  void initialize(const vector<T >& w, const vector<T >& b);
+  void initialize();
+  SparseVector forward(const SparseVector& x) override ;
   SparseVector backward(const SparseVector& g,
                         const SparseVector& x,
                         const Optimizer& optimizer,
-                        bool compute_gx);
+                        bool compute_gx)
+  override;
+
  private:
   const size_type  I_;
   const size_type  O_;
@@ -126,6 +139,38 @@ class Layer {
   vector<mutex >   weight_lock_;
   vector<mutex >   bias_lock_;
 #endif
+};
+
+
+#define CodeType uint8_t
+#define Ks 256
+#define M_ 8
+
+/**
+* \brief Vectorized Sparse Matrix Multiplication Layer
+*/
+class VQLayer : public AbstractLayer {
+ public:
+  VQLayer(size_type I, size_type O, Activation type);
+  ~VQLayer() ;
+
+  VQLayer(const VQLayer& l);
+  VQLayer(VQLayer&& l);
+
+  void initialize();
+  SparseVector forward(const SparseVector& x) override ;
+  SparseVector backward(const SparseVector& g,
+                        const SparseVector& x,
+                        const Optimizer& optimizer,
+                        bool compute_gx) override;
+
+ private:
+  const size_type  I_;
+  const size_type  O_;
+  const size_type  D_; //sub dimension D_ = O_ / M_
+  const Activation type_;
+  T*               dict_; // shape of [M_, Ks, D_]
+  CodeType *       code_; // shape of [O_, M_]
 };
 
 
