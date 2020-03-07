@@ -25,6 +25,7 @@ class ProgressBar {
       if (num_star==51) {
         std::cout << std::endl;
       }
+      std::cout << std::flush;
     }
 
     return *this;
