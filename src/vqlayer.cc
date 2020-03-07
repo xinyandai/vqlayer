@@ -6,6 +6,7 @@
 #include <cmath>
 #include <cstring>
 #include <iostream>
+#include <fstream>
 #include <limits>
 #include <random>
 
@@ -33,6 +34,55 @@ size_type vq(const T* w, const T* dict, size_type ks, size_type d) {
   return re;
 }
 
+void nomalize_codebook(T* dict, size_type m, size_type ks, size_type d) {
+  for (int i = 0; i < m * ks; ++i, dict+=d) {
+    T norm_sqr = 0;
+    for (int j = 0; j < d; ++j) {
+      norm_sqr += dict[j] * dict[j];
+    }
+    if (norm_sqr <= 0) {
+      throw std::runtime_error("zero norm");
+    }
+    T norm = sqrt(norm_sqr);
+    for (int j = 0; j < d; ++j) {
+      dict[j] /= norm;
+    }
+  }
+}
+
+template <typename DataType>
+void load_data(DataType* data, size_t D, size_t N, const char* inputPath) {
+  std::ifstream fin(inputPath, std::ios::binary | std::ios::ate);
+  if (!fin) {
+    throw std::runtime_error("cannot open file ");
+  }
+
+  size_t fileSize = fin.tellg();
+  fin.seekg(0, fin.beg);
+  if (fileSize == 0) {
+    throw std::runtime_error("file size is 0 ");
+  }
+
+  int dim;
+  fin.read(reinterpret_cast<char*>(&dim), sizeof(int));
+  if (D != dim)
+    throw std::runtime_error("Dimension not matched when reading file ");
+  size_t bytesPerRecord = dim * sizeof(DataType) + 4;
+  if (fileSize % bytesPerRecord != 0) {
+    throw std::runtime_error("File not aligned");
+  }
+  size_t cardinality = fileSize / bytesPerRecord;
+  if (N != cardinality) {
+    throw std::runtime_error("cardinality not matched");
+  }
+  fin.read((char*)data, sizeof(DataType) * dim);
+
+  for (int i = 1; i < cardinality; ++i) {
+    fin.read((char*)&dim, 4);
+    fin.read((char*)(data + i * dim), sizeof(DataType) * dim);
+  }
+  fin.close();
+}
 
 VQLayer::VQLayer(size_type I, size_type O,
                  Activation type)
@@ -46,8 +96,8 @@ VQLayer::VQLayer(size_type I, size_type O,
 }
 
 VQLayer::VQLayer(const VQLayer& c) : VQLayer(c.I_, c.O_, c.type_) {
-  std::memcpy(code_, c.code_, O_ * M_);
-  std::memcpy(dict_, c.dict_,  M_ * Ks * D_);
+  std::memcpy(code_, c.code_, O_ * M_ * sizeof(CodeType));
+  std::memcpy(dict_, c.dict_,  M_ * Ks * D_ * sizeof(T));
 }
 
 VQLayer::VQLayer(VQLayer&& c) : I_(c.I_), O_(c.O_), D_(c.D_),
@@ -64,17 +114,28 @@ VQLayer::~VQLayer() {
 void VQLayer::initialize() {
   std::default_random_engine generator(1016);
 
-  std::uniform_real_distribution<T > distribution(0.0, 1.0 / std::sqrt(I_ / 2.0));
-  T* w = dict_;
-
-  for (int i = 0; i < M_ * Ks * D_; i++) {
-      *(w++) = distribution(generator);
-  }
   std::uniform_int_distribution<> codes_dist(0, Ks-1);
   CodeType* code = code_;
   for (int i = 0; i < M_ * O_; ++i) {
     *(code++) = codes_dist(generator);
   }
+//#define LEARNED_CODE_BOOK
+#ifndef LEARNED_CODE_BOOK
+  std::uniform_real_distribution<T > distribution(0.0, 1.0);
+  T* w = dict_;
+  for (int i = 0; i < M_ * Ks * D_; i++) {
+      *(w++) = distribution(generator);
+  }
+#else
+  std::string file_name = "../codebooks/learned_codebook/angular_dim_"
+                          + std::to_string(D_) + "_Ks_"
+                          + std::to_string(Ks) + ".fvecs";
+  load_data<float >(dict_, D_, Ks, file_name.c_str());
+  for (int i = 1; i < M_; ++i) {
+    std::memcpy(&dict_[i * Ks * D_], dict_, Ks * D_ * sizeof(T));
+  }
+#endif
+//  nomalize_codebook(dict_, M_, Ks, D_);
 }
 
 SparseVector VQLayer::forward(const SparseVector& x) {
@@ -186,7 +247,7 @@ SparseVector VQLayer::backward(const SparseVector& g,
       size_type begin_idx = m * D_;
       size_type end_idx = begin_idx + D_;
       auto& c = code[g.index_[o] * M_ + m];
-      std::memcpy(w, &dict[m * Ks * D_ + c * D_], D_);
+      std::memcpy(w, &dict[m * Ks * D_ + c * D_], D_ * sizeof(T));
       for (; x.size() > idx && x.index_[idx] < end_idx; idx++) {
         T grad = x.value_[idx] * g.value_[o];
         w[x.index_[idx] - begin_idx] -= lr * grad;

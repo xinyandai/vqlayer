@@ -25,8 +25,8 @@ Layer::Layer(size_type I, size_type O, Activation type)
 }
 
 Layer::Layer(const Layer& c) : Layer(c.I_, c.O_, c.type_) {
-  std::memcpy(weight_, c.weight_, I_ * O_);
-  std::memcpy(bias_, c.bias_,  O_);
+  std::memcpy(weight_, c.weight_, I_ * O_ * sizeof(T));
+  std::memcpy(bias_, c.bias_,  O_ * sizeof(T));
 }
 
 Layer::Layer(Layer&& c) : I_(c.I_), O_(c.O_), type_(c.type_),
