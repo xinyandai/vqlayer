@@ -91,9 +91,10 @@ SparseVector VQLayer::forward(const SparseVector& x) {
     for (int m = 0; m < M_; ++m) {
       volatile T* d = dict + m * Ks * D_ + k * D_; // TODO to be optimized
       T mm = 0;
-      size_type end_idx = (m + 1) * D_;
+      size_type begin_idx = m * D_;
+      size_type end_idx = begin_idx + D_;
       while (x.size() > idx && x.index_[idx] < end_idx) {
-        mm += x.value_[idx] * d[x.index_[idx]];
+        mm += x.value_[idx] * d[x.index_[idx] - begin_idx];
         idx++;
       }
       tables[m][k] = mm;
