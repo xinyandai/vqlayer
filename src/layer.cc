@@ -29,10 +29,10 @@ Layer::Layer(const Layer& c) : Layer(c.I_, c.O_, c.type_) {
   std::memcpy(bias_, c.bias_,  O_ * sizeof(T));
 }
 
-Layer::Layer(Layer&& c) : I_(c.I_), O_(c.O_), type_(c.type_),
-                          weight_(c.weight_), bias_(c.bias_)
+Layer::Layer(Layer&& c) noexcept : I_(c.I_), O_(c.O_), type_(c.type_),
+                                   weight_(c.weight_), bias_(c.bias_)
 #ifdef ThreadSafe
-                          ,weight_lock_(c.I_), bias_lock_(c.O_)
+                                   ,weight_lock_(c.I_), bias_lock_(c.O_)
 #endif
 {
   c.weight_ = NULL;

@@ -41,9 +41,11 @@ int Network::predictClass(int **inputIndices, float **inputValues,
     for (int i = 0; i < num_layers_; ++i) {
       activation = layer_[i]->forward(activation) ;
     }
-    T max_act = std::numeric_limits<float >::min();
+    if (activation.size() == 0)
+      throw std::runtime_error("predict 0 classed");
+    T max_act = activation.value_[0];
     int predict_class = activation.index_[0];
-    for (int k = 0; k < activation.size(); k++) {
+    for (int k = 1; k < activation.size(); k++) {
       T cur_act = activation.value_[k];
       if (max_act < cur_act) {
         max_act = cur_act;

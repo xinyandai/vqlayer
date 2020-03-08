@@ -115,7 +115,7 @@ class Layer : public AbstractLayer {
   ~Layer() override ;
 
   Layer(const Layer& l);
-  Layer(Layer&& l);
+  Layer(Layer&& l) noexcept;
 
   const T* weight() { return weight_; }
   const T* bias() { return bias_; }
@@ -144,7 +144,8 @@ class Layer : public AbstractLayer {
 
 #define CodeType uint8_t
 #define Ks 256
-#define M_ 8
+#define M_ 8 // M of Product Quantization
+#define R_ 8 // depth of Residual Quantization
 
 /**
 * \brief Vectorized Sparse Matrix Multiplication Layer
@@ -152,10 +153,10 @@ class Layer : public AbstractLayer {
 class VQLayer : public AbstractLayer {
  public:
   VQLayer(size_type I, size_type O, Activation type);
-  ~VQLayer() ;
+  ~VQLayer() override;
 
   VQLayer(const VQLayer& l);
-  VQLayer(VQLayer&& l);
+  VQLayer(VQLayer&& l) noexcept;
 
   void initialize();
   SparseVector forward(const SparseVector& x) override ;
@@ -173,6 +174,31 @@ class VQLayer : public AbstractLayer {
   CodeType *       code_; // shape of [O_, M_]
 };
 
+/**
+* \brief Vectorized Sparse Matrix Multiplication Layer
+*/
+class RQLayer : public AbstractLayer {
+ public:
+  RQLayer(size_type I, size_type O, Activation type);
+  ~RQLayer() override;
+
+  RQLayer(const RQLayer& l);
+  RQLayer(RQLayer&& l) noexcept;
+
+  void initialize();
+  SparseVector forward(const SparseVector& x) override ;
+  SparseVector backward(const SparseVector& g,
+                        const SparseVector& x,
+                        const Optimizer& optimizer,
+                        bool compute_gx) override;
+
+ private:
+  const size_type  I_;
+  const size_type  O_;
+  const Activation type_;
+  T*               dict_; // shape of [M_, Ks, I_]
+  CodeType *       code_; // shape of [O_, R_]
+};
 
 class SoftMaxCrossEntropy {
  public:

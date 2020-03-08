@@ -100,8 +100,9 @@ VQLayer::VQLayer(const VQLayer& c) : VQLayer(c.I_, c.O_, c.type_) {
   std::memcpy(dict_, c.dict_,  M_ * Ks * D_ * sizeof(T));
 }
 
-VQLayer::VQLayer(VQLayer&& c) : I_(c.I_), O_(c.O_), D_(c.D_),
-                                type_(c.type_), code_(c.code_), dict_(c.dict_) {
+VQLayer::VQLayer(VQLayer&& c) noexcept: I_(c.I_), O_(c.O_),
+                                        D_(c.D_), type_(c.type_),
+                                        code_(c.code_), dict_(c.dict_) {
   c.dict_ = nullptr;
   c.code_ = nullptr;
 }
