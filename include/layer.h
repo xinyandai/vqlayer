@@ -20,6 +20,19 @@ using std::shared_ptr;
 using T = float;
 using size_type = int;
 
+#define CodeType uint8_t
+#define Ks 256
+#define M_ 8 // M of Product Quantization
+
+size_type vq(const T* w, const T* dict, size_type ks, size_type d);
+void rq(const T* w, const T* dict, CodeType* code, T* norm,
+        size_type ks, size_type m, size_type d);
+
+T normalize(T* w, size_type d);
+T l2dist(const T* a, const T* b, size_type d);
+void nomalize_codebook(T* dict, size_type m, size_type ks, size_type d);
+void rq_codebook(T* centroid, size_type M, size_type n,
+                 size_type ks, size_type d, size_type iter);
 enum Activation {
   ReLu, SoftMax
 };
@@ -142,10 +155,7 @@ class Layer : public AbstractLayer {
 };
 
 
-#define CodeType uint8_t
-#define Ks 256
-#define M_ 8 // M of Product Quantization
-#define R_ 8 // depth of Residual Quantization
+
 
 /**
 * \brief Vectorized Sparse Matrix Multiplication Layer
@@ -196,7 +206,8 @@ class RQLayer : public AbstractLayer {
   const size_type  I_;
   const size_type  O_;
   const Activation type_;
-  T*               dict_; // shape of [M_, Ks, I_]
+  T*               norm_; //
+  T*               dict_; // shape of [R_, Ks, I_]
   CodeType *       code_; // shape of [O_, R_]
 };
 

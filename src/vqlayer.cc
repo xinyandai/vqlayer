@@ -12,43 +12,6 @@
 
 #include "../include/layer.h"
 
-T l2dist(const T* a, const T* b, size_type d) {
-  T dist = 0;
-  for (int i = 0; i < d; ++i) {
-    T diff = (*(a++)) - (*(b++));
-    dist += diff * diff;
-  }
-  return dist;
-}
-
-size_type vq(const T* w, const T* dict, size_type ks, size_type d) {
-  size_type re = 0;
-  T min_dist = l2dist(w, dict, d);
-  for (int i = 1; i < ks; ++i) {
-    dict += d;
-    T dist = l2dist(w, dict, d);
-    if (dist < min_dist) {
-      re = i;
-    }
-  }
-  return re;
-}
-
-void nomalize_codebook(T* dict, size_type m, size_type ks, size_type d) {
-  for (int i = 0; i < m * ks; ++i, dict+=d) {
-    T norm_sqr = 0;
-    for (int j = 0; j < d; ++j) {
-      norm_sqr += dict[j] * dict[j];
-    }
-    if (norm_sqr <= 0) {
-      throw std::runtime_error("zero norm");
-    }
-    T norm = sqrt(norm_sqr);
-    for (int j = 0; j < d; ++j) {
-      dict[j] /= norm;
-    }
-  }
-}
 
 template <typename DataType>
 void load_data(DataType* data, size_t D, size_t N, const char* inputPath) {

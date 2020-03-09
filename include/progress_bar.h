@@ -3,6 +3,9 @@
 //
 
 #pragma once
+#include <iostream>
+
+using std::string;
 
 class ProgressBar {
  public:
@@ -16,7 +19,7 @@ class ProgressBar {
 
   ProgressBar& update(int i) {
     cur_ += i;
-    int num_star = 1.0 * cur_ / len_ * 50 + 1;
+    int num_star = int(1.0 * cur_ / len_ * 50 + 1);
     if (num_star > star_) {
       for (int j = 0; j < num_star-star_; ++j) {
         std::cout << '*';
