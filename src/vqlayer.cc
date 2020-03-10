@@ -13,40 +13,6 @@
 #include "../include/layer.h"
 
 
-template <typename DataType>
-void load_data(DataType* data, size_t D, size_t N, const char* inputPath) {
-  std::ifstream fin(inputPath, std::ios::binary | std::ios::ate);
-  if (!fin) {
-    throw std::runtime_error("cannot open file ");
-  }
-
-  size_t fileSize = fin.tellg();
-  fin.seekg(0, fin.beg);
-  if (fileSize == 0) {
-    throw std::runtime_error("file size is 0 ");
-  }
-
-  int dim;
-  fin.read(reinterpret_cast<char*>(&dim), sizeof(int));
-  if (D != dim)
-    throw std::runtime_error("Dimension not matched when reading file ");
-  size_t bytesPerRecord = dim * sizeof(DataType) + 4;
-  if (fileSize % bytesPerRecord != 0) {
-    throw std::runtime_error("File not aligned");
-  }
-  size_t cardinality = fileSize / bytesPerRecord;
-  if (N != cardinality) {
-    throw std::runtime_error("cardinality not matched");
-  }
-  fin.read((char*)data, sizeof(DataType) * dim);
-
-  for (int i = 1; i < cardinality; ++i) {
-    fin.read((char*)&dim, 4);
-    fin.read((char*)(data + i * dim), sizeof(DataType) * dim);
-  }
-  fin.close();
-}
-
 VQLayer::VQLayer(size_type I, size_type O,
                  Activation type)
                  : I_(I), O_(O), type_(type), D_(I_/M_) {
@@ -91,15 +57,12 @@ void VQLayer::initialize() {
       *(w++) = distribution(generator);
   }
 #else
-  std::string file_name = "../codebooks/learned_codebook/angular_dim_"
-                          + std::to_string(D_) + "_Ks_"
-                          + std::to_string(Ks) + ".fvecs";
-  load_data<float >(dict_, D_, Ks, file_name.c_str());
+  vq_codebook(dict_, /*n*/65536, Ks, D_, /*iter*/20);
   for (int i = 1; i < M_; ++i) {
     std::memcpy(&dict_[i * Ks * D_], dict_, Ks * D_ * sizeof(T));
   }
 #endif
-//  nomalize_codebook(dict_, M_, Ks, D_);
+//  normalize_codebook(dict_, M_, Ks, D_);
 }
 
 SparseVector VQLayer::forward(const SparseVector& x) {

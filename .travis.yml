@@ -25,3 +25,4 @@ script:
   - cmake ..
   - make
   - ./test_smm
+  - ./test_vq

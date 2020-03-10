@@ -14,7 +14,7 @@
 #include "../include/progress_bar.h"
 
 
-T l2dist(const T* a, const T* b, size_type d) {
+T l2dist_sqr(const T *a, const T *b, size_type d) {
   T dist = 0;
   for (int i = 0; i < d; ++i) {
     T diff = (*(a++)) - (*(b++));
@@ -25,10 +25,10 @@ T l2dist(const T* a, const T* b, size_type d) {
 
 size_type vq(const T* w, const T* dict, size_type ks, size_type d) {
   size_type re = 0;
-  T min_dist = l2dist(w, dict, d);
+  T min_dist = l2dist_sqr(w, dict, d);
   for (int i = 1; i < ks; ++i) {
     dict += d;
-    T dist = l2dist(w, dict, d);
+    T dist = l2dist_sqr(w, dict, d);
     if (dist < min_dist) {
       re = i;
       min_dist = dist;
@@ -53,11 +53,10 @@ T normalize(T* w, size_type d) {
 }
 
 void normalize_codebook(T* dict, size_type m, size_type ks, size_type d) {
-  for (int i = 0; i < m * ks; ++i, dict+=d) {
-    normalize(dict, d);
+  for (int i = 0; i < m * ks; ++i) {
+    normalize(&dict[i * d], d);
   }
 }
-
 
 /**
  * \param w    shape of [d]
@@ -124,20 +123,50 @@ void kmeans(T* centroids, CodeType* code, const T* data,
       size_type c = vq(&data[t * d], centroids, ks, d);
       code[t] = (CodeType)c;
     }
-    // recenter
-    std::memset(centroids, 0, ks * d * sizeof(T));
-    std::memset(count.data(), 0, ks * sizeof(size_type));
     for (int t = 0; t < n; ++t) {
       CodeType c = code[t];
       count[c]++;
+    }
+    // recenter
+    std::memset(centroids, 0, ks * d * sizeof(T));
+    std::memset(count.data(), 0, ks * sizeof(size_type));
+#pragma omp parallel for
+    for (int t = 0; t < n; ++t) {
+      CodeType c = code[t];
       for (int dim = 0; dim < d; ++dim) {
         centroids[c * d + dim] += data[t * d + dim];
       }
     }
+#pragma omp parallel for
     for (int c = 0; c < ks; ++c) {
-      if (count[c] == 0) {
-        std::cerr << "empty cluster at iter " << i << std::endl;
+      if (count[c] == 0) { // split the biggest center
+        static std::random_device rd;
+        static std::mt19937_64 rng(rd());
+        std::uniform_real_distribution<T > distribution(0.0, 1.0);
+        int biggest_cluster = 0;
+        for (int k = 1; k < ks; ++k) {
+          if (count[k] > count[biggest_cluster]) {
+            biggest_cluster = k;
+          }
+        }
+        int candidate = count[biggest_cluster];
+        int selected = -1;
+        for (int t = 0; t < n; ++t) {
+          if (code[t] == biggest_cluster) {
+            float rand = distribution(rng);
+            if (rand * candidate <= 1.0) {
+              selected = t;
+              break;
+            }
+            candidate--;
+          }
+        }
+        if (selected < 0) {
+          throw std::runtime_error("select nothing for empty center");
+        }
+        std::memcpy(&centroids[c * d], &data[selected * d], d * sizeof(T));
       }
+      else
       for (int dim = 0; dim < d; ++dim) {
         centroids[c * d + dim] /= count[c];
       }
@@ -194,5 +223,27 @@ void rq_codebook(T* centroid, const size_type M, const size_type n,
 
   kmeans_residual(centroid, code, x, M, n, ks, d, iter);
 
+  delete [] code;
+  delete [] x;
+}
+
+void vq_codebook(T* centroid, const size_type n,
+                 const size_type ks, const size_type d, const size_type iter) {
+  std::default_random_engine generator(1016);
+  std::uniform_real_distribution<T > distribution(0.0, 1.0);
+  T* x = new T[n * d];
+  auto* code = new CodeType[n];
+
+  for (int i = 0; i < n * d; ++i) {
+    x[i] = distribution(generator);
+  }
+
+  for (int i = 0; i < n; ++i) {
+    normalize(&x[i * d], d);
+  }
+
+  kmeans(centroid, code, x, n, ks, d, iter);
+
+  delete [] code;
   delete [] x;
 }

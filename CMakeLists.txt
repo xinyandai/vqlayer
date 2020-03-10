@@ -20,7 +20,7 @@ endif()
 file(GLOB_RECURSE VQ_LAYER_SOURCES "src/*.cc")
 add_executable(main app/main.cc ${VQ_LAYER_SOURCES})
 
-set(test_set  smm)
+set(test_set  smm vq)
 foreach(test  ${test_set})
     add_executable(test_${test} test/test_${test}.cc ${VQ_LAYER_SOURCES})
 endforeach()

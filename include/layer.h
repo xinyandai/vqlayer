@@ -29,9 +29,11 @@ void rq(const T* w, const T* dict, CodeType* code, T* norm,
         size_type ks, size_type m, size_type d);
 
 T normalize(T* w, size_type d);
-T l2dist(const T* a, const T* b, size_type d);
-void nomalize_codebook(T* dict, size_type m, size_type ks, size_type d);
+T l2dist_sqr(const T *a, const T *b, size_type d);
+void normalize_codebook(T* dict, size_type m, size_type ks, size_type d);
 void rq_codebook(T* centroid, size_type M, size_type n,
+                 size_type ks, size_type d, size_type iter);
+void vq_codebook(T* centroid, const size_type n,
                  size_type ks, size_type d, size_type iter);
 enum Activation {
   ReLu, SoftMax
