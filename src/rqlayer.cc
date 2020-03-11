@@ -96,7 +96,6 @@ SparseVector RQLayer::forward(const SparseVector& x) {
       T mm = 0;
       for (size_type idx = 0; idx < x.size(); ++idx) {
         mm += x.value_[idx] * d[x.index_[idx]];
-        idx++;
       }
       tables[m][k] = mm;
     }

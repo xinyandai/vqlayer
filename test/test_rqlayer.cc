@@ -24,7 +24,7 @@ class FakeRQLayer : public RQLayer {
 };
 
 void test_rq(Activation activation, int seed) {
-  const size_type I = 16, O=1;
+  const size_type I = 16, O = 16;
   RQLayer rq(I, O, activation);
   FakeRQLayer fakeRQLayer(rq);
 
