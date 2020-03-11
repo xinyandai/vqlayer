@@ -56,6 +56,7 @@ void RQLayer::initialize() {
   for (int i = 0; i < O_; ++i) {
     *(norm++) = distribution(generator);
   }
+//#define LEARNED_CODE_BOOK
 #ifndef LEARNED_CODE_BOOK
   T* w = dict_;
   for (int i = 0; i < M_ * Ks * I_; ++i) {
@@ -68,6 +69,9 @@ void RQLayer::initialize() {
 }
 
 T RQLayer::get_w(size_type i, size_type o)  {
+  static size_type count = 0;
+  if (count++ == 0)
+    std::cerr << "Not efficient, for test only" << std::endl;
   T w = 0;
   for (int m = 0; m < M_; ++m) {
     CodeType c = code_[o * M_ + m];

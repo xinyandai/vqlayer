@@ -80,13 +80,13 @@ T Layer::get_b(size_type o)  {
 
 
 SparseVector Layer::forward(const SparseVector& x) {
-  return AbstractLayer::forward(x);
+  return AbstractLayer::default_forward(x);
 }
 
 
 SparseVector Layer::backward_x(const SparseVector& g,
-                        const SparseVector& x) {
-  return AbstractLayer::backward_x(g, x);
+                               const SparseVector& x) {
+  return AbstractLayer::default_backward_x(g, x);
 }
 
 

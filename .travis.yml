@@ -26,3 +26,5 @@ script:
   - make
   - ./test_smm
   - ./test_vq
+  - ./test_rqlayer
+  - ./test_pqlayer

@@ -20,7 +20,7 @@ T AbstractLayer::get_b(size_type o)  {
   return 0;
 }
 
-SparseVector AbstractLayer::forward(const SparseVector& x) {
+SparseVector AbstractLayer::default_forward(const SparseVector &x) {
   SparseVector y;
 
   // Relu activation remove the negative output
@@ -79,8 +79,8 @@ SparseVector AbstractLayer::backward( const SparseVector& g,
   return gx;
 }
 
-SparseVector AbstractLayer::backward_x(const SparseVector& g,
-                                       const SparseVector& x) {
+SparseVector AbstractLayer::default_backward_x(const SparseVector &g,
+                                               const SparseVector &x) {
   // Compute gradient  with respect to the input:
   // gx[I_] = w[I_, O_], g[O_].
   // Previous layer's activation function must be ReLu,
@@ -97,7 +97,7 @@ SparseVector AbstractLayer::backward_x(const SparseVector& g,
 }
 
 void AbstractLayer::backward_w( const SparseVector& g,
-                                        const SparseVector& x,
-                                        const Optimizer& optimizer) {
+                                const SparseVector& x,
+                                const Optimizer& optimizer) {
   throw std::runtime_error("backward for weights is not implemented");
 }

@@ -42,3 +42,24 @@ void compare(std::string variable,
   std::cout << "\t\t";
   dump(p, size);
 }
+
+void compare(std::string variable,
+             SparseVector s, SparseVector p) {
+  bool success = true;
+  if (s.size() != p.size()) {
+    success = false;
+  }
+  else for (int i = 0; i < s.size(); ++i) {
+    if (s.index_[i] != p.index_[i] || std::abs(s.value_[i] - p.value_[i]) > 0.001) {
+      success = false;
+      break;
+    }
+  }
+
+  std::cout << (success?"[PASS]":"[FAIL]") ;
+  std::cout << "\t" << variable << std::endl;
+  std::cout << "\t\t";
+  dump(s);
+  std::cout << "\t\t";
+  dump(p);
+}

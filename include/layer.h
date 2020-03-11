@@ -6,6 +6,9 @@
 #pragma once
 #include <algorithm>
 #include <vector>
+#include <cmath>
+#include <iostream>
+#include <random>
 #include <memory>
 #include <numeric>
 #include <mutex>
@@ -102,7 +105,14 @@ class AbstractLayer {
    * \param x Sparse Vector
    * \return y Sparse Vector
    */
-  virtual SparseVector forward(const SparseVector& x);
+  virtual SparseVector forward(const SparseVector& x) = 0;
+
+  /**
+   * \brief default implementation for forward(x)
+   * \param x
+   * \return
+   */
+  SparseVector default_forward(const SparseVector &x);
 
   /**
    * \brief calculated gradient with respect to weight and input
@@ -121,13 +131,20 @@ class AbstractLayer {
                                 const SparseVector& x,
                                 const Optimizer& optimizer,
                                 bool compute_gx);
-
   virtual SparseVector backward_x(const SparseVector& g,
-                                const SparseVector& x);
+                                const SparseVector& x) = 0;
+
+  /**
+   * \brief default implementation for backward_x(g, x)
+   * \param g
+   * \param x
+   * \return
+   */
+  SparseVector default_backward_x(const SparseVector &g, const SparseVector &x);
 
   virtual void backward_w(const SparseVector& g,
-                                const SparseVector& x,
-                                const Optimizer& optimizer);
+                          const SparseVector& x,
+                          const Optimizer& optimizer);
 
  public:
   const size_type  I_;
@@ -157,11 +174,11 @@ class Layer : public AbstractLayer {
   SparseVector forward(const SparseVector& x) override;
 
   SparseVector backward_x(const SparseVector& g,
-                                  const SparseVector& x) override;
+                          const SparseVector& x) override;
 
   void backward_w(const SparseVector& g,
-                                  const SparseVector& x,
-                                  const Optimizer& optimizer) override;
+                  const SparseVector& x,
+                  const Optimizer& optimizer) override;
  private:
   T*               weight_;
   T*               bias_;
