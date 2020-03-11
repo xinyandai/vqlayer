@@ -53,7 +53,7 @@ class SparseVector {
 
   SparseVector(const SparseVector& s) = default;
   SparseVector(SparseVector&& s) = default;
-  explicit SparseVector(const vector<T>& s): index_(s.size()), value_(s) {
+  SparseVector(const vector<T>& s): index_(s.size()), value_(s) {
     std::iota(index_.begin(), index_.end(), 0);
   };
 
