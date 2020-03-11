@@ -10,7 +10,7 @@
 #include "../include/layer.h"
 
 Layer::Layer(size_type I, size_type O, Activation type)
-: I_(I), O_(O), type_(type)
+: AbstractLayer(I, O, type)
 #ifdef ThreadSafe
   , weight_lock_(I), bias_lock_(O)
 #endif
@@ -29,7 +29,7 @@ Layer::Layer(const Layer& c) : Layer(c.I_, c.O_, c.type_) {
   std::memcpy(bias_, c.bias_,  O_ * sizeof(T));
 }
 
-Layer::Layer(Layer&& c) noexcept : I_(c.I_), O_(c.O_), type_(c.type_),
+Layer::Layer(Layer&& c) noexcept : AbstractLayer(c.I_, c.O_, c.type_),
                                    weight_(c.weight_), bias_(c.bias_)
 #ifdef ThreadSafe
                                    ,weight_lock_(c.I_), bias_lock_(c.O_)
@@ -70,78 +70,33 @@ void Layer::initialize() {
   }
 }
 
-SparseVector Layer::forward(const SparseVector& x) {
-  SparseVector y;
-  volatile T* weight = weight_;
-  volatile T* bias = bias_;
-  // Relu activation remove the negative output
-  if (type_ == Activation::ReLu) {
-    for (int o = 0; o < O_; ++o) {
-      T mm = bias[o];
-      for (int s = 0; s < x.size(); ++s) {
-        size_type i = x.index_[s];
-        mm += x.value_[s] * weight[O_ * i + o];
-      }
-      if (mm > 0) {
-        y.push_back(o, mm);
-      }
-    }
-  }
+T Layer::get_w(size_type i, size_type o)  {
+  return weight_[i * O_ + o];
+}
 
-  // Compute SoftMax, see @link{https://deepnotes.io/softmax-crossentropy}
-  // TODO replace expensive std::exp operation with lookup table
-  else if (type_ == Activation::SoftMax) {
-    T max_v = std::numeric_limits<T>::min();
-    for (int o = 0; o < O_; ++o) {
-      T mm = bias[o];
-      for (int s = 0; s < x.size(); ++s) {
-        size_type i = x.index_[s];
-        mm += x.value_[s] * weight[O_ * i + o];
-      }
-      y.push_back(o, mm);
-      if (mm > max_v)
-        max_v = mm;
-    }
-    // C is a constant for computation stability
-    const T C = -max_v;
-    T sum = 0;
-    for (auto& v : y.value_) {
-      v = std::exp(v+C);
-      sum += v;
-    }
-    if (sum > 0) {
-      for (auto& v : y.value_) {
-        v = v / sum;
-      }
-    }
-  }
-  return y;
+T Layer::get_b(size_type o)  {
+  return bias_[o];
 }
 
 
-SparseVector Layer::backward( const SparseVector& g,
-                              const SparseVector& x,
-                              const Optimizer& optimizer,
-                              bool compute_gx ) {
+SparseVector Layer::forward(const SparseVector& x) {
+  return AbstractLayer::forward(x);
+}
+
+
+SparseVector Layer::backward_x(const SparseVector& g,
+                        const SparseVector& x) {
+  return AbstractLayer::backward_x(g, x);
+}
+
+
+void Layer::backward_w(const SparseVector& g,
+                        const SparseVector& x,
+                        const Optimizer& optimizer) {
   T lr = optimizer.lr;
   SparseVector gx;
   volatile T* weight = weight_;
   volatile T* bias = bias_;
-  if (compute_gx) {
-    // Compute gradient  with respect to the input:
-    // gx[I_] = w[I_, O_], g[O_].
-    // Previous layer's activation function must be ReLu,
-    // since SoftMax only exist in last layer.
-    gx = x;
-    for (int i = 0; i < x.size(); ++i) {
-      volatile T* w = weight + O_ * x.index_[i];
-      T grad = 0;
-      for (int o = 0; o < g.size(); ++o) {
-        grad += g.value_[o] * w[g.index_[o]];
-      }
-      gx.value_[i] = grad;
-    }
-  }
 
   // compute gradient and update with respect to the weight
   // gw[I_, O_] = x[1, I_]' g[1, O_]
@@ -164,6 +119,5 @@ SparseVector Layer::backward( const SparseVector& g,
 #endif
     bias[index] -= lr * grad;
   }
-
-  return gx;
 }
+

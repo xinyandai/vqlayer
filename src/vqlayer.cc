@@ -15,7 +15,7 @@
 
 VQLayer::VQLayer(size_type I, size_type O,
                  Activation type)
-                 : I_(I), O_(O), type_(type), D_(I_/M_) {
+                 : AbstractLayer(I, O, type), D_(I_/M_) {
   if (I_ % M_ > 0)
     throw std::runtime_error("I_ is not dividable by M_");
 
@@ -29,9 +29,8 @@ VQLayer::VQLayer(const VQLayer& c) : VQLayer(c.I_, c.O_, c.type_) {
   std::memcpy(dict_, c.dict_,  M_ * Ks * D_ * sizeof(T));
 }
 
-VQLayer::VQLayer(VQLayer&& c) noexcept: I_(c.I_), O_(c.O_),
-                                        D_(c.D_), type_(c.type_),
-                                        code_(c.code_), dict_(c.dict_) {
+VQLayer::VQLayer(VQLayer&& c) noexcept: AbstractLayer(c.I_, c.O_, c.type_),
+                                        D_(c.D_), code_(c.code_), dict_(c.dict_) {
   c.dict_ = nullptr;
   c.code_ = nullptr;
 }
@@ -63,6 +62,16 @@ void VQLayer::initialize() {
   }
 #endif
 //  normalize_codebook(dict_, M_, Ks, D_);
+}
+
+T VQLayer::get_w(size_type i, size_type o)  {
+  int m = 0;
+  while (i >= D_) {
+    m++;
+    i -= D_;
+  }
+  CodeType c = code_[o * M_ + m];
+  return dict_[m * Ks * D_ + c * D_ + i];
 }
 
 SparseVector VQLayer::forward(const SparseVector& x) {
@@ -135,39 +144,45 @@ SparseVector VQLayer::forward(const SparseVector& x) {
 }
 
 
-SparseVector VQLayer::backward(const SparseVector& g,
-                               const SparseVector& x,
-                               const Optimizer& optimizer,
-                               bool compute_gx ) {
-  T lr = optimizer.lr;
-  SparseVector gx;
+SparseVector VQLayer::backward_x(const SparseVector& g,
+                                       const SparseVector& x) {
+  // Compute gradient  with respect to the input:
+  // gx[I_] = w[I_, O_], g[O_].
+  // Previous layer's activation function must be ReLu,
+  // since SoftMax only exist in last layer.
   T* const dict = dict_;        // shape of [M_, Ks, D_]
   CodeType* const code = code_; // shape of [O_, M_]
+  SparseVector gx = x;
+  gx = x;
+  size_type idx = 0;
+  for (int m = 0; m < M_; ++m) {
+    size_type begin_idx = m * D_;
+    size_type end_idx = begin_idx + D_;
 
-  if (compute_gx) {
-    // gx[I_] = w[I_, O_], g[O_].
-    gx = x;
-    size_type idx = 0;
-    for (int m = 0; m < M_; ++m) {
-      size_type begin_idx = m * D_;
-      size_type end_idx = begin_idx + D_;
-
-      for (; x.size() > idx && x.index_[idx] < end_idx; idx++) {
-        T grad = 0;
-        for (int o = 0; o < g.size(); ++o) {
-          CodeType c = code[g.index_[o] * M_ + m];
-          // TODO to be optimized
-          grad += g.value_[o] * dict[m * Ks * D_ + c * D_ +
-              x.index_[idx] - begin_idx];
-        }
-        gx.value_[idx] = grad;
+    for (; x.size() > idx && x.index_[idx] < end_idx; idx++) {
+      T grad = 0;
+      for (int o = 0; o < g.size(); ++o) {
+        CodeType c = code[g.index_[o] * M_ + m];
+        // TODO to be optimized
+        grad += g.value_[o] * dict[m * Ks * D_ + c * D_ +
+          x.index_[idx] - begin_idx];
       }
+      gx.value_[idx] = grad;
     }
   }
+  return gx;
+}
 
+void VQLayer::backward_w(const SparseVector& g,
+                               const SparseVector& x,
+                               const Optimizer& optimizer) {
   // compute gradient and update with respect to the weight
   // gw[i_, o_] = x[1, i_]' g[1, o_]
+  T* const dict = dict_;        // shape of [M_, Ks, D_]
+  CodeType* const code = code_; // shape of [O_, M_]
   T * w = new T[D_];
+  T lr = optimizer.lr;
+
   for (int o = 0; o < g.size(); ++o) {
     size_type idx = 0;
     for (int m = 0; m < M_; ++m) {
@@ -183,7 +198,6 @@ SparseVector VQLayer::backward(const SparseVector& g,
     }
   }
   delete [] w;
-
-
-  return gx;
 }
+
+

@@ -53,7 +53,7 @@ class SparseVector {
 
   SparseVector(const SparseVector& s) = default;
   SparseVector(SparseVector&& s) = default;
-  SparseVector(const vector<T>& s): index_(s.size()), value_(s) {
+  explicit SparseVector(const vector<T>& s): index_(s.size()), value_(s) {
     std::iota(index_.begin(), index_.end(), 0);
   };
 
@@ -91,15 +91,18 @@ class SparseVector {
 
 class AbstractLayer {
  public:
-  AbstractLayer() = default;
+  AbstractLayer(size_type I, size_type O, Activation type)
+              : I_(I), O_(O), type_(type) {};
   virtual ~AbstractLayer() = default;
 
+  virtual T get_w(size_type i, size_type o);
+  virtual T get_b(size_type o);
   /**
    * \brief y = \sigma(xW + b), where sigma is the activation function
    * \param x Sparse Vector
    * \return y Sparse Vector
    */
-  virtual SparseVector forward(const SparseVector& x) = 0;
+  virtual SparseVector forward(const SparseVector& x);
 
   /**
    * \brief calculated gradient with respect to weight and input
@@ -117,8 +120,19 @@ class AbstractLayer {
   virtual SparseVector backward(const SparseVector& g,
                                 const SparseVector& x,
                                 const Optimizer& optimizer,
-                                bool compute_gx)
-                                = 0;
+                                bool compute_gx);
+
+  virtual SparseVector backward_x(const SparseVector& g,
+                                const SparseVector& x);
+
+  virtual void backward_w(const SparseVector& g,
+                                const SparseVector& x,
+                                const Optimizer& optimizer);
+
+ public:
+  const size_type  I_;
+  const size_type  O_;
+  const Activation type_;
 };
 
 /**
@@ -137,17 +151,18 @@ class Layer : public AbstractLayer {
 
   void initialize(const vector<T >& w, const vector<T >& b);
   void initialize();
-  SparseVector forward(const SparseVector& x) override ;
-  SparseVector backward(const SparseVector& g,
-                        const SparseVector& x,
-                        const Optimizer& optimizer,
-                        bool compute_gx)
-  override;
 
+  T get_w(size_type i, size_type o) override;
+  T get_b(size_type o) override;
+  SparseVector forward(const SparseVector& x) override;
+
+  SparseVector backward_x(const SparseVector& g,
+                                  const SparseVector& x) override;
+
+  void backward_w(const SparseVector& g,
+                                  const SparseVector& x,
+                                  const Optimizer& optimizer) override;
  private:
-  const size_type  I_;
-  const size_type  O_;
-  const Activation type_;
   T*               weight_;
   T*               bias_;
 #ifdef ThreadSafe
@@ -171,17 +186,18 @@ class VQLayer : public AbstractLayer {
   VQLayer(VQLayer&& l) noexcept;
 
   void initialize();
+  T get_w(size_type i, size_type o) override;
   SparseVector forward(const SparseVector& x) override ;
-  SparseVector backward(const SparseVector& g,
-                        const SparseVector& x,
-                        const Optimizer& optimizer,
-                        bool compute_gx) override;
+
+  SparseVector backward_x(const SparseVector& g,
+                                  const SparseVector& x) override;
+
+  void backward_w(const SparseVector& g,
+                                  const SparseVector& x,
+                                  const Optimizer& optimizer) override;
 
  private:
-  const size_type  I_;
-  const size_type  O_;
   const size_type  D_; //sub dimension D_ = O_ / M_
-  const Activation type_;
   T*               dict_; // shape of [M_, Ks, D_]
   CodeType *       code_; // shape of [O_, M_]
 };
@@ -198,16 +214,17 @@ class RQLayer : public AbstractLayer {
   RQLayer(RQLayer&& l) noexcept;
 
   void initialize();
+  T get_w(size_type i, size_type o) override;
   SparseVector forward(const SparseVector& x) override ;
-  SparseVector backward(const SparseVector& g,
-                        const SparseVector& x,
-                        const Optimizer& optimizer,
-                        bool compute_gx) override;
+
+  SparseVector backward_x(const SparseVector& g,
+                          const SparseVector& x) override;
+
+  void backward_w(const SparseVector& g,
+                          const SparseVector& x,
+                          const Optimizer& optimizer) override;
 
  private:
-  const size_type  I_;
-  const size_type  O_;
-  const Activation type_;
   T*               norm_; //
   T*               dict_; // shape of [R_, Ks, I_]
   CodeType *       code_; // shape of [O_, R_]
