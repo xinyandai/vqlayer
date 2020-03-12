@@ -38,15 +38,20 @@ size_type vq(const T* w, const T* dict, size_type ks, size_type d) {
   return re;
 }
 
-T normalize(T* w, size_type d) {
+T norm_sqr(T* w, size_type d) {
   T norm_sqr = 0;
   for (int i = 0; i < d; ++i) {
     norm_sqr += w[i] * w[i];
   }
-  if (norm_sqr <= 0) {
+  return norm_sqr;
+}
+
+T normalize(T* w, size_type d) {
+  T n_sqr = norm_sqr(w, d);
+  if (n_sqr <= 0) {
     throw std::runtime_error("zero norm");
   }
-  T norm = std::sqrt(norm_sqr);
+  T norm = std::sqrt(n_sqr);
   for (int i = 0; i < d; ++i) {
     w[i] /= norm;
   }
@@ -110,10 +115,12 @@ void kmeans(T* centroids, CodeType* code, const T* data,
             const size_type n, const size_type ks,
             const size_type d, const size_type iter) {
 
-  vector<size_type > count(ks, 0);
   if (ks > n) {
-    throw std::runtime_error("too many centroid");
+    throw std::runtime_error("too many centroids");
   }
+  std::default_random_engine generator(1016);
+  std::uniform_int_distribution<> distribution(0, n-1);
+  // random initialization
   std::memcpy(centroids, data, ks * d * sizeof(T));
 
   ProgressBar bar(iter, std::string("k-means"));
@@ -121,55 +128,28 @@ void kmeans(T* centroids, CodeType* code, const T* data,
     // assign
 #pragma omp parallel for
     for (int t = 0; t < n; ++t) {
-      size_type c = vq(&data[t * d], centroids, ks, d);
-      code[t] = (CodeType)c;
+      code[t] = static_cast<CodeType>(vq(&data[t * d], centroids, ks, d));
     }
+
+    // recenter
+    vector<size_type > count(ks, 0);
+    std::memset(centroids, 0, ks * d * sizeof(T));
     for (int t = 0; t < n; ++t) {
       CodeType c = code[t];
       count[c]++;
-    }
-    // recenter
-    std::memset(centroids, 0, ks * d * sizeof(T));
-    std::memset(count.data(), 0, ks * sizeof(size_type));
-#pragma omp parallel for
-    for (int t = 0; t < n; ++t) {
-      CodeType c = code[t];
       for (int dim = 0; dim < d; ++dim) {
         centroids[c * d + dim] += data[t * d + dim];
       }
     }
-#pragma omp parallel for
+
     for (int c = 0; c < ks; ++c) {
-      if (count[c] == 0) {  // split the biggest center
-        static std::random_device rd;
-        static std::mt19937_64 rng(rd());
-        std::uniform_real_distribution<T > distribution(0.0, 1.0);
-        int biggest_cluster = 0;
-        for (int k = 1; k < ks; ++k) {
-          if (count[k] > count[biggest_cluster]) {
-            biggest_cluster = k;
-          }
+      if (count[c] == 0) {
+        size_type t = distribution(generator);
+        std::memcpy(&centroids[c * d], &data[t * d], d * sizeof(T));
+      } else {
+        for (int dim = 0; dim < d; ++dim) {
+          centroids[c * d + dim] /= count[c];
         }
-        int candidate = count[biggest_cluster];
-        int selected = -1;
-        for (int t = 0; t < n; ++t) {
-          if (code[t] == biggest_cluster) {
-            float rand = distribution(rng);
-            if (rand * candidate <= 1.0) {
-              selected = t;
-              break;
-            }
-            candidate--;
-          }
-        }
-        if (selected < 0) {
-          throw std::runtime_error("select nothing for empty center");
-        }
-        std::memcpy(&centroids[c * d], &data[selected * d], d * sizeof(T));
-      }
-      else
-      for (int dim = 0; dim < d; ++dim) {
-        centroids[c * d + dim] /= count[c];
       }
     }
   }

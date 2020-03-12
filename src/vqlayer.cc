@@ -29,8 +29,9 @@ VQLayer::VQLayer(const VQLayer& c) : VQLayer(c.I_, c.O_, c.type_) {
   std::memcpy(dict_, c.dict_,  M_ * Ks * D_ * sizeof(T));
 }
 
-VQLayer::VQLayer(VQLayer&& c) noexcept: AbstractLayer(c.I_, c.O_, c.type_),
-                                        D_(c.D_), code_(c.code_), dict_(c.dict_) {
+VQLayer::VQLayer(VQLayer&& c) noexcept:
+                 AbstractLayer(c.I_, c.O_, c.type_),
+                 D_(c.D_), code_(c.code_), dict_(c.dict_) {
   c.dict_ = nullptr;
   c.code_ = nullptr;
 }
@@ -46,7 +47,7 @@ void VQLayer::initialize() {
   std::uniform_int_distribution<> codes_dist(0, Ks-1);
   CodeType* code = code_;
   for (int i = 0; i < M_ * O_; ++i) {
-    *(code++) = codes_dist(generator);
+    *(code++) = static_cast<CodeType>(codes_dist(generator));
   }
 //#define LEARNED_CODE_BOOK
 #ifndef LEARNED_CODE_BOOK
@@ -55,13 +56,13 @@ void VQLayer::initialize() {
   for (int i = 0; i < M_ * Ks * D_; i++) {
       *(w++) = distribution(generator);
   }
+//  normalize_codebook(dict_, M_, Ks, D_);
 #else
   vq_codebook(dict_, /*n*/65536, Ks, D_, /*iter*/20);
   for (int i = 1; i < M_; ++i) {
     std::memcpy(&dict_[i * Ks * D_], dict_, Ks * D_ * sizeof(T));
   }
 #endif
-//  normalize_codebook(dict_, M_, Ks, D_);
 }
 
 T VQLayer::get_w(size_type i, size_type o)  {
@@ -80,8 +81,8 @@ T VQLayer::get_w(size_type i, size_type o)  {
 SparseVector VQLayer::forward(const SparseVector& x) {
   SparseVector y;
 
-  volatile T* dict = dict_;        // shape of [M_, Ks, D_]
-  volatile CodeType* code = code_; // shape of [O_, M_]
+  volatile T* dict = dict_;         // shape of [M_, Ks, D_]
+  volatile CodeType* code = code_;  // shape of [O_, M_]
 
   // calculate look up table:  [M_, Ks]
   T tables[M_][Ks];
@@ -89,7 +90,8 @@ SparseVector VQLayer::forward(const SparseVector& x) {
   for (int k = 0; k < Ks; ++k) {
     size_type idx = 0;
     for (int m = 0; m < M_; ++m) {
-      volatile T* d = dict + m * Ks * D_ + k * D_;  // TODO(Xinyan) to be optimized
+      // TODO(Xinyan) to be optimized
+      volatile T* d = dict + m * Ks * D_ + k * D_;
       T mm = 0;
       size_type begin_idx = m * D_;
       size_type end_idx = begin_idx + D_;
@@ -114,9 +116,7 @@ SparseVector VQLayer::forward(const SparseVector& x) {
         y.push_back(o, mm);
       }
     }
-  }
-
-  else if (type_ == Activation::SoftMax) {
+  } else if (type_ == Activation::SoftMax) {
     T max_v = std::numeric_limits<T>::min();
     volatile CodeType* c = code;
     for (int o = 0; o < O_; ++o) {

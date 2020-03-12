@@ -65,7 +65,7 @@ void RQLayer::initialize() {
   }
   normalize_codebook(dict_, M_, Ks, I_);
 #else
-  rq_codebook(/*centroid*/dict_, M_, /*n*/ 65536,
+  rq_codebook(/*centroid*/dict_, M_, /*n*/65536,
               /*ks*/Ks, /*d*/I_, /*iter*/20);
 #endif
 }
@@ -92,7 +92,7 @@ SparseVector RQLayer::forward(const SparseVector& x) {
 
   // calculate look up table:  [M_, Ks]
   T tables[M_][Ks];
-  volatile T* d = dict; 
+  volatile T* d = dict;
   for (int m = 0; m < M_; ++m) {
     for (int k = 0; k < Ks; ++k, d+=I_) {
       T mm = 0;
@@ -118,9 +118,7 @@ SparseVector RQLayer::forward(const SparseVector& x) {
         y.push_back(o, mm);
       }
     }
-  }
-
-  else if (type_ == Activation::SoftMax) {
+  } else if (type_ == Activation::SoftMax) {
     T max_v = std::numeric_limits<T>::min();
     volatile T* norm = norm_;
     volatile CodeType* c = code;
@@ -182,9 +180,9 @@ void RQLayer::backward_w(const SparseVector& g,
                          const Optimizer& optimizer) {
   T lr = optimizer.lr;
   SparseVector gx;
-  T* const dict = dict_;        // shape of [M_, Ks, D_]
-  T* const norm = norm_;        // shape of [O_]
-  CodeType* const code = code_; // shape of [O_, M_]
+  T* const dict = dict_;         // shape of [M_, Ks, D_]
+  T* const norm = norm_;         // shape of [O_]
+  CodeType* const code = code_;  // shape of [O_, M_]
   // compute gradient and update with respect to the weight
   // gw[i_, o_] = x[1, i_]' g[1, o_]
   T * w = new T[I_];

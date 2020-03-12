@@ -6,6 +6,10 @@ project(vqlayer)
 SET( CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -lm -DNDEBUG -std=c++17 -DHAVE_CXX0X -openmp -mtune=generic -fpic -w -fopenmp -ftree-vectorize -ftree-vectorizer-verbose=0" )
 
+IF (CMAKE_BUILD_TYPE STREQUAL Debug)
+    ADD_DEFINITIONS(-DDEBUG)
+ENDIF()
+
 find_package( PkgConfig )
 
 if (OPENMP_FOUND)

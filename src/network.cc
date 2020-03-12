@@ -20,7 +20,7 @@ Network::Network( int *sizesOfLayers, vector<Activation >& layersTypes,
   layer_.emplace_back(new Layer(input_dim_, layer_size_[0], layersTypes[0]));
   for (int i = 1; i < num_layers_; ++i) {
     std::cout << "building layer " << layer_size_[i-1] << " x " << layer_size_[i] << std::endl;
-    layer_.emplace_back(new Layer(layer_size_[i-1], layer_size_[i], layersTypes[i]));
+    layer_.emplace_back(new VQLayer(layer_size_[i-1], layer_size_[i], layersTypes[i]));
   }
   std::cout << "building network, done" << std::endl;
 }
@@ -31,8 +31,9 @@ int Network::predictClass(int **inputIndices, float **inputValues,
                           int *lengths, int **labels, int *labelsize) {
 //  std::cout << "predict \t";
   int correctPred = 0;
-
+#ifndef DEBUG
 #pragma omp parallel for reduction(+:correctPred)
+#endif
   for (int b = 0; b < batch_size_; ++b) {
     // construct from input
     SparseVector activation = SparseVector(inputIndices[b], inputValues[b], lengths[b]);
@@ -66,7 +67,9 @@ float Network::ProcessInput(int **inputIndices, float **inputValues,
                             int *labelsize) {
 // std::cout << "training\t";
   float loss = 0;
+#ifndef DEBUG
 #pragma omp parallel for reduction(+:loss)
+#endif
   for (int b = 0; b < batch_size_; ++b) {
     vector<SparseVector > activations ((size_t)num_layers_ + 1);
     // construct from input
