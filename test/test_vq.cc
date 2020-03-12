@@ -53,10 +53,28 @@ void test_kmeans() {
   compare("dict", centroids.data(), centroids_.data(), centroids.size());
 }
 
+void test_residual_kmeans() {
+  const size_type depth = 4;
+  const size_type n = 32;
+  const size_type ks = 16;
+  const size_type d = 8;
+  const size_type iter = 1;
+  vector<T> centroids(depth * ks * d);
+  vector<CodeType>  codes(n * depth);
+
+  vector<T>  data_  = {};
+  vector<CodeType>  r_codes_  = {};
+  vector<T>  r_centroids_  = {};
+
+  kmeans(centroids.data(), codes.data(), data_.data(), n, ks, d, iter);
+  compare("code", codes.data(), r_codes_.data(), r_codes_.size());
+  compare("dict", centroids.data(), r_centroids_.data(), centroids.size());
+}
 
 int main() {
   test_l2dist();
   test_normalize();
   test_kmeans();
+//  test_residual_kmeans();
   return 0;
 }
