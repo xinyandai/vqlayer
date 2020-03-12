@@ -2,9 +2,6 @@
 // Created by xinyan on 11/3/2020.
 //
 
-//
-// Created by xinyan on 11/3/2020.
-//
 /**
 * \brief Vectorized Sparse Matrix Multiplication Layer
 */

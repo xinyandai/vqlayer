@@ -10,7 +10,7 @@
 #include <iostream>
 #include <limits>
 #include <random>
-#include "../include/layer.h"
+#include "../include/loss.h"
 
 
 SparseVector SoftMaxCrossEntropy:: compute(
@@ -24,7 +24,7 @@ SparseVector SoftMaxCrossEntropy:: compute(
 
   T y_prob = (T)1.0 / y.size();
 
-  if (loss) { // compute loss = Sum(yi log pi)
+  if (loss) {  // compute loss = Sum(yi log pi)
     T loss_ = 0;
     size_type i_p = 0;
     size_type i_y = 0;
@@ -32,7 +32,7 @@ SparseVector SoftMaxCrossEntropy:: compute(
       if (p.index_[i_p] == y[i_y]) {
         loss_ += y_prob * std::log(p.value_[i_p]);
         i_p++, i_y++;
-      } else if (p.index_[i_p] < y[i_y]){
+      } else if (p.index_[i_p] < y[i_y]) {
         i_p++;
       } else {
         i_y++;

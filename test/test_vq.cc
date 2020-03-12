@@ -5,7 +5,7 @@
 #include "test.h"
 
 
-using namespace std;
+using std::vector;
 
 void test_l2dist() {
   vector<T>  a_  = { 0.1357047994833403, -0.9500842332443221,

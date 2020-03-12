@@ -16,10 +16,10 @@ Layer::Layer(size_type I, size_type O, Activation type)
 #endif
 {
   weight_ = new T[I * O];
-  if (weight_==nullptr)
+  if (weight_ == nullptr)
     throw std::runtime_error("Failed to allocate memory for weight");
   bias_ = new T[O];
-  if (bias_==nullptr)
+  if (bias_ == nullptr)
     throw std::runtime_error("Failed to allocate memory for bias");
   initialize();
 }
@@ -32,11 +32,11 @@ Layer::Layer(const Layer& c) : Layer(c.I_, c.O_, c.type_) {
 Layer::Layer(Layer&& c) noexcept : AbstractLayer(c.I_, c.O_, c.type_),
                                    weight_(c.weight_), bias_(c.bias_)
 #ifdef ThreadSafe
-                                   ,weight_lock_(c.I_), bias_lock_(c.O_)
+                                   , weight_lock_(c.I_), bias_lock_(c.O_)
 #endif
 {
-  c.weight_ = NULL;
-  c.bias_ = NULL;
+  c.weight_ = nullptr;
+  c.bias_ = nullptr;
 }
 
 Layer::~Layer() {
@@ -57,16 +57,16 @@ void Layer::initialize(const vector<T >& w, const vector<T >& b) {
 
 void Layer::initialize() {
   std::default_random_engine generator(1016);
-  std::uniform_real_distribution<T > distribution(0.0, 1.0 / std::sqrt(I_ / 2.0));
+  std::uniform_real_distribution<T > dist(0.0f, 1.0f / std::sqrt(I_ / 2.0f));
   T* w = weight_;
   for (int i = 0; i < I_; i++) {
     for (int j = 0; j < O_; j++) {
-      *(w++) = distribution(generator);
+      *(w++) = dist(generator);
     }
   }
   T* b = bias_;
   for (int o = 0; o < O_; ++o) {
-    *(b++) = distribution(generator);
+    *(b++) = dist(generator);
   }
 }
 

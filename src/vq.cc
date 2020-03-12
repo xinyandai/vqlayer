@@ -10,9 +10,10 @@
 #include <iterator>
 #include <algorithm>
 #include <vector>
-#include "../include/layer.h"
+#include "../include/vq.h"
 #include "../include/progress_bar.h"
 
+using std::vector;
 
 T l2dist_sqr(const T *a, const T *b, size_type d) {
   T dist = 0;
@@ -106,7 +107,7 @@ void rq(const T* w, const T* dict, CodeType* code, T* norm,
  * \param iter 
  */
 void kmeans(T* centroids, CodeType* code, const T* data,
-            const size_type n, const size_type ks, 
+            const size_type n, const size_type ks,
             const size_type d, const size_type iter) {
 
   vector<size_type > count(ks, 0);
@@ -139,7 +140,7 @@ void kmeans(T* centroids, CodeType* code, const T* data,
     }
 #pragma omp parallel for
     for (int c = 0; c < ks; ++c) {
-      if (count[c] == 0) { // split the biggest center
+      if (count[c] == 0) {  // split the biggest center
         static std::random_device rd;
         static std::mt19937_64 rng(rd());
         std::uniform_real_distribution<T > distribution(0.0, 1.0);

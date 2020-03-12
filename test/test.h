@@ -2,6 +2,7 @@
 // Created by xinyan on 10/3/2020.
 //
 #pragma once
+#include <string>
 #include "../include/layer.h"
 
 void dump(const SparseVector& s) {
@@ -20,7 +21,7 @@ void dump(const T* p, int size) {
 
 void compare(std::string variable, T a, T b) {
   bool success = (std::abs(a - b) < 0.001);
-  std::cout << (success?"[PASS]":"[FAIL]") ;
+  std::cout << (success?"[PASS]":"[FAIL]");
   std::cout << " " << variable << std::endl;
   std::cout << "\t" << a << "\n";
   std::cout << "\t" << b << "\n";
@@ -49,10 +50,13 @@ void compare(std::string variable,
   if (s.size() != p.size()) {
     success = false;
   }
-  else for (int i = 0; i < s.size(); ++i) {
-    if (s.index_[i] != p.index_[i] || std::abs(s.value_[i] - p.value_[i]) > 0.001) {
-      success = false;
-      break;
+  else {
+    for (int i = 0; i < s.size(); ++i) {
+      if (s.index_[i] != p.index_[i] ||
+        std::abs(s.value_[i] - p.value_[i]) > 0.001) {
+        success = false;
+        break;
+      }
     }
   }
 

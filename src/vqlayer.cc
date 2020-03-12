@@ -89,7 +89,7 @@ SparseVector VQLayer::forward(const SparseVector& x) {
   for (int k = 0; k < Ks; ++k) {
     size_type idx = 0;
     for (int m = 0; m < M_; ++m) {
-      volatile T* d = dict + m * Ks * D_ + k * D_; // TODO to be optimized
+      volatile T* d = dict + m * Ks * D_ + k * D_;  // TODO(Xinyan) to be optimized
       T mm = 0;
       size_type begin_idx = m * D_;
       size_type end_idx = begin_idx + D_;
@@ -108,7 +108,7 @@ SparseVector VQLayer::forward(const SparseVector& x) {
       T mm = 0;
 #pragma unroll
       for (int m = 0; m < M_; ++m) {
-        mm += tables[m][*(c++)]; // *c = code[o * M_ + m]
+        mm += tables[m][*(c++)];  // *c = code[o * M_ + m]
       }
       if (mm > 0) {
         y.push_back(o, mm);
@@ -123,7 +123,7 @@ SparseVector VQLayer::forward(const SparseVector& x) {
       T mm = 0;
 #pragma unroll
       for (int m = 0; m < M_; ++m) {
-        mm += tables[m][*(c++)]; // *c = code[o * M_ + m]
+        mm += tables[m][*(c++)];  // *c = code[o * M_ + m]
       }
 
       y.push_back(o, mm);
@@ -153,8 +153,8 @@ SparseVector VQLayer::backward_x(const SparseVector& g,
   // gx[I_] = w[I_, O_], g[O_].
   // Previous layer's activation function must be ReLu,
   // since SoftMax only exist in last layer.
-  T* const dict = dict_;        // shape of [M_, Ks, D_]
-  CodeType* const code = code_; // shape of [O_, M_]
+  T* const dict = dict_;         // shape of [M_, Ks, D_]
+  CodeType* const code = code_;  // shape of [O_, M_]
   SparseVector gx = x;
   gx = x;
   size_type idx = 0;
@@ -166,7 +166,7 @@ SparseVector VQLayer::backward_x(const SparseVector& g,
       T grad = 0;
       for (int o = 0; o < g.size(); ++o) {
         CodeType c = code[g.index_[o] * M_ + m];
-        // TODO to be optimized
+        // TODO(Xinyan) to be optimized
         grad += g.value_[o] * dict[m * Ks * D_ + c * D_ +
           x.index_[idx] - begin_idx];
       }
@@ -181,8 +181,8 @@ void VQLayer::backward_w(const SparseVector& g,
                                const Optimizer& optimizer) {
   // compute gradient and update with respect to the weight
   // gw[i_, o_] = x[1, i_]' g[1, o_]
-  T* const dict = dict_;        // shape of [M_, Ks, D_]
-  CodeType* const code = code_; // shape of [O_, M_]
+  T* const dict = dict_;         // shape of [M_, Ks, D_]
+  CodeType* const code = code_;  // shape of [O_, M_]
   T * w = new T[D_];
   T lr = optimizer.lr;
 
@@ -197,7 +197,7 @@ void VQLayer::backward_w(const SparseVector& g,
         T grad = x.value_[idx] * g.value_[o];
         w[x.index_[idx] - begin_idx] -= lr * grad;
       }
-      c = vq(w, &dict[m * Ks * D_], Ks, D_);
+      c = static_cast<CodeType>(vq(w, &dict[m * Ks * D_], Ks, D_));
     }
   }
   delete [] w;

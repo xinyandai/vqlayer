@@ -29,8 +29,9 @@ RQLayer::RQLayer(const RQLayer& c) : RQLayer(c.I_, c.O_, c.type_) {
   std::memcpy(norm_, c.norm_,  O_ * sizeof(T));
 }
 
-RQLayer::RQLayer(RQLayer&& c) noexcept: AbstractLayer(c.I_, c.O_, c.type_),
-                                        code_(c.code_), dict_(c.dict_), norm_(c.norm_) {
+RQLayer::RQLayer(RQLayer&& c) noexcept:
+                 AbstractLayer(c.I_, c.O_, c.type_),
+                 code_(c.code_), dict_(c.dict_), norm_(c.norm_) {
   c.dict_ = nullptr;
   c.code_ = nullptr;
   c.norm_ = nullptr;
@@ -48,7 +49,7 @@ void RQLayer::initialize() {
   std::uniform_int_distribution<> codes_dist(0, Ks-1);
   CodeType* code = code_;
   for (int i = 0; i < M_ * O_; ++i) {
-    *(code++) = codes_dist(generator);
+    *(code++) = static_cast<CodeType>(codes_dist(generator));
   }
   
   std::uniform_real_distribution<T > distribution(0.0, 1.0);
@@ -56,7 +57,7 @@ void RQLayer::initialize() {
   for (int i = 0; i < O_; ++i) {
     *(norm++) = distribution(generator);
   }
-//#define LEARNED_CODE_BOOK
+// #define LEARNED_CODE_BOOK
 #ifndef LEARNED_CODE_BOOK
   T* w = dict_;
   for (int i = 0; i < M_ * Ks * I_; ++i) {
@@ -64,7 +65,8 @@ void RQLayer::initialize() {
   }
   normalize_codebook(dict_, M_, Ks, I_);
 #else
- rq_codebook(/*centroid*/dict_, M_, /*n*/ 65536, /*ks*/Ks, /*d*/I_, /*iter*/20);
+  rq_codebook(/*centroid*/dict_, M_, /*n*/ 65536,
+              /*ks*/Ks, /*d*/I_, /*iter*/20);
 #endif
 }
 
@@ -85,8 +87,8 @@ SparseVector RQLayer::forward(const SparseVector& x) {
 //  return AbstractLayer::forward(x);
   SparseVector y;
 
-  volatile T* dict = dict_;        // shape of [M_, Ks, I_]
-  volatile CodeType* code = code_; // shape of [O_, M_]
+  volatile T* dict = dict_;         // shape of [M_, Ks, I_]
+  volatile CodeType* code = code_;  // shape of [O_, M_]
 
   // calculate look up table:  [M_, Ks]
   T tables[M_][Ks];
@@ -109,7 +111,7 @@ SparseVector RQLayer::forward(const SparseVector& x) {
       T mm = 0;
 #pragma unroll
       for (int m = 0; m < M_; ++m) {
-        mm += tables[m][*(c++)]; // *c = code[o * M_ + m]
+        mm += tables[m][*(c++)];  // *c = code[o * M_ + m]
       }
       mm *= *(norm++);
       if (mm > 0) {
@@ -126,7 +128,7 @@ SparseVector RQLayer::forward(const SparseVector& x) {
       T mm = 0;
 #pragma unroll
       for (int m = 0; m < M_; ++m) {
-        mm += tables[m][*(c++)]; // *c = code[o * M_ + m]
+        mm += tables[m][*(c++)];  // *c = code[o * M_ + m]
       }
       mm *= *(norm++);
       y.push_back(o, mm);
@@ -153,8 +155,8 @@ SparseVector RQLayer::forward(const SparseVector& x) {
 SparseVector RQLayer::backward_x(const SparseVector& g,
                                  const SparseVector& x) {
 //  return AbstractLayer::backward_x(g, x);
-  T* const norm = norm_;        // shape of [O_]
-  CodeType* const code = code_; // shape of [O_, M_]
+  T* const norm = norm_;         // shape of [O_]
+  CodeType* const code = code_;  // shape of [O_, M_]
   // Compute gradient  with respect to the input:
   // gx[I_] = w[I_, O_], g[O_].
   // Previous layer's activation function must be ReLu,

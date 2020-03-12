@@ -2,7 +2,10 @@
 // Created by xinyan on 12/3/2020.
 //
 #pragma once
+#include <vector>
 #include "tensor.h"
+
+using std::vector;
 
 class SoftMaxCrossEntropy {
  public:

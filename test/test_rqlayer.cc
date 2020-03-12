@@ -1,6 +1,7 @@
 //
 // Created by xinyan on 11/3/2020.
 //
+
 /**
 * \brief Vectorized Sparse Matrix Multiplication Layer
 */
@@ -8,7 +9,6 @@
 
 class FakeRQLayer : public RQLayer {
  public:
-
   ~FakeRQLayer() override = default;
 
   FakeRQLayer(const RQLayer& l) : RQLayer(l) {}

@@ -59,6 +59,7 @@ def cross_entropy(X, y):
     loss = np.sum(log_likelihood) / m
     return loss
 
+
 M = 1
 D = 8  # I_
 N = 4  # O_

@@ -18,7 +18,7 @@
 #include "loss.h"
 #include "tensor.h"
 
-//#define ThreadSafe
+// #define ThreadSafe
 
 using std::mutex;
 using std::vector;
@@ -38,7 +38,7 @@ typedef struct {
 class AbstractLayer {
  public:
   AbstractLayer(size_type I, size_type O, Activation type)
-              : I_(I), O_(O), type_(type) {};
+              : I_(I), O_(O), type_(type) {}
   virtual ~AbstractLayer() = default;
 
   virtual T get_w(size_type i, size_type o);
@@ -101,7 +101,7 @@ class AbstractLayer {
 class Layer : public AbstractLayer {
  public:
   Layer(size_type I, size_type O, Activation type);
-  ~Layer() override ;
+  ~Layer() override;
 
   Layer(const Layer& l);
   Layer(Layer&& l) noexcept;
@@ -122,6 +122,7 @@ class Layer : public AbstractLayer {
   void backward_w(const SparseVector& g,
                   const SparseVector& x,
                   const Optimizer& optimizer) override;
+
  private:
   T*               weight_;
   T*               bias_;
@@ -147,7 +148,7 @@ class VQLayer : public AbstractLayer {
 
   void initialize();
   T get_w(size_type i, size_type o) override;
-  SparseVector forward(const SparseVector& x) override ;
+  SparseVector forward(const SparseVector& x) override;
 
   SparseVector backward_x(const SparseVector& g,
                                   const SparseVector& x) override;
@@ -157,9 +158,9 @@ class VQLayer : public AbstractLayer {
                                   const Optimizer& optimizer) override;
 
  private:
-  const size_type  D_; //sub dimension D_ = O_ / M_
-  T*               dict_; // shape of [M_, Ks, D_]
-  CodeType *       code_; // shape of [O_, M_]
+  const size_type  D_;     //sub dimension D_ = O_ / M_
+  T*               dict_;  // shape of [M_, Ks, D_]
+  CodeType *       code_;  // shape of [O_, M_]
 };
 
 /**
@@ -175,7 +176,7 @@ class RQLayer : public AbstractLayer {
 
   void initialize();
   T get_w(size_type i, size_type o) override;
-  SparseVector forward(const SparseVector& x) override ;
+  SparseVector forward(const SparseVector& x) override;
 
   SparseVector backward_x(const SparseVector& g,
                           const SparseVector& x) override;
@@ -185,7 +186,7 @@ class RQLayer : public AbstractLayer {
                           const Optimizer& optimizer) override;
 
  private:
-  T*               norm_; //
-  T*               dict_; // shape of [R_, Ks, I_]
-  CodeType *       code_; // shape of [O_, R_]
+  T*               norm_;  //
+  T*               dict_;  // shape of [R_, Ks, I_]
+  CodeType *       code_;  // shape of [O_, R_]
 };

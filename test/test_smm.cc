@@ -5,8 +5,6 @@
 
 #include "test.h"
 
-
-
 void test_smm_relu() {
   vector<T>  x_  = { 0.1357047994833403, -0.9500842332443221 };
   vector<T>  w_  = { 0.12282730752559588, 1.901416969226425,
@@ -23,11 +21,11 @@ void test_smm_relu() {
                       -1.6247273429380038, 0.08706421239427464 };
   vector<T>  gb_  = { 1.7100876807416627, -0.0916384140982638 };
 
-  size_type I=2, O=2;
+  size_type I = 2, O = 2;
   Optimizer optimizer = {0.1};
   Layer layer(I, O, Activation::ReLu);
   layer.initialize(w_, b_);
-  SparseVector x = x_, g=g_;
+  SparseVector x = x_, g = g_;
 
   SparseVector c_o = layer.forward(x);
 
@@ -41,7 +39,7 @@ void test_smm_relu() {
 }
 
 void test_smm_softmax() {
-  size_type I=8, O=4;
+  size_type I = 8, O = 4;
   vector<T>  x_  = { 1.5516870102023173, -0.9251752728867606, -0.014352775709434534,
                      0.22134742695532325, 0.15594105122622795, 0.5030637979205353,
                      -0.7834341624394263, 0.7741397728809003 };

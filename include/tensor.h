@@ -6,20 +6,22 @@
 #include <vector>
 
 using std::vector;
+using T = float;
+using size_type = int;
 
 class SparseVector {
  public:
   SparseVector()  = default;
   SparseVector(vector<size_type >&& idx, vector<T >&& val)
-    : index_(idx), value_(val) {};
+    : index_(idx), value_(val) {}
   SparseVector(size_type* idx, T* val, int len)
-    : index_(idx, idx+len), value_(val, val+len) {};
+    : index_(idx, idx+len), value_(val, val+len) {}
 
   SparseVector(const SparseVector& s) = default;
   SparseVector(SparseVector&& s) = default;
   SparseVector(const vector<T>& s): index_(s.size()), value_(s) {
     std::iota(index_.begin(), index_.end(), 0);
-  };
+  }
 
   SparseVector& operator=(const SparseVector& s) = default;
   SparseVector& operator=(SparseVector&& s) = default;
@@ -27,12 +29,12 @@ class SparseVector {
     index_.resize(s.size());
     std::iota(index_.begin(), index_.end(), 0);
     value_ = s;
-  };
+  }
   SparseVector& operator=(vector<T >&& s) {
     index_.resize(s.size());
     std::iota(index_.begin(), index_.end(), 0);
     value_ = s;
-  };
+  }
 
   void clear() {
     index_.clear();

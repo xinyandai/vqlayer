@@ -67,10 +67,10 @@ SparseVector AbstractLayer::default_forward(const SparseVector &x) {
 }
 
 
-SparseVector AbstractLayer::backward( const SparseVector& g,
-                                      const SparseVector& x,
-                                      const Optimizer& optimizer,
-                                      bool compute_gx ) {
+SparseVector AbstractLayer::backward(const SparseVector& g,
+                                     const SparseVector& x,
+                                     const Optimizer& optimizer,
+                                     bool compute_gx ) {
   SparseVector gx;
   if (compute_gx) {
     gx = backward_x(g, x);
@@ -96,8 +96,8 @@ SparseVector AbstractLayer::default_backward_x(const SparseVector &g,
   return gx;
 }
 
-void AbstractLayer::backward_w( const SparseVector& g,
-                                const SparseVector& x,
-                                const Optimizer& optimizer) {
+void AbstractLayer::backward_w(const SparseVector& g,
+                               const SparseVector& x,
+                               const Optimizer& optimizer) {
   throw std::runtime_error("backward for weights is not implemented");
 }
