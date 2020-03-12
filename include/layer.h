@@ -14,30 +14,17 @@
 #include <mutex>
 #include <thread>
 
+#include "vq.h"
+#include "loss.h"
+#include "tensor.h"
+
 //#define ThreadSafe
 
 using std::mutex;
 using std::vector;
 using std::shared_ptr;
 
-using T = float;
-using size_type = int;
 
-#define CodeType uint8_t
-#define Ks 256
-#define M_ 8 // M of Product Quantization
-
-size_type vq(const T* w, const T* dict, size_type ks, size_type d);
-void rq(const T* w, const T* dict, CodeType* code, T* norm,
-        size_type ks, size_type m, size_type d);
-
-T normalize(T* w, size_type d);
-T l2dist_sqr(const T *a, const T *b, size_type d);
-void normalize_codebook(T* dict, size_type m, size_type ks, size_type d);
-void rq_codebook(T* centroid, size_type M, size_type n,
-                 size_type ks, size_type d, size_type iter);
-void vq_codebook(T* centroid, const size_type n,
-                 size_type ks, size_type d, size_type iter);
 enum Activation {
   ReLu, SoftMax
 };
@@ -46,51 +33,7 @@ typedef struct {
   T lr;
 } Optimizer;
 
-class SparseVector {
- public:
-  SparseVector()  = default;
-  SparseVector(vector<size_type >&& idx, vector<T >&& val)
-    : index_(idx), value_(val) {};
-  SparseVector(size_type* idx, T* val, int len)
-    : index_(idx, idx+len), value_(val, val+len) {};
 
-  SparseVector(const SparseVector& s) = default;
-  SparseVector(SparseVector&& s) = default;
-  SparseVector(const vector<T>& s): index_(s.size()), value_(s) {
-    std::iota(index_.begin(), index_.end(), 0);
-  };
-
-  SparseVector& operator=(const SparseVector& s) = default;
-  SparseVector& operator=(SparseVector&& s) = default;
-  SparseVector& operator=(const vector<T>& s) {
-    index_.resize(s.size());
-    std::iota(index_.begin(), index_.end(), 0);
-    value_ = s;
-  };
-  SparseVector& operator=(vector<T >&& s) {
-    index_.resize(s.size());
-    std::iota(index_.begin(), index_.end(), 0);
-    value_ = s;
-  };
-
-  void clear() {
-    index_.clear();
-    value_.clear();
-  }
-  size_t size() const {
-    return index_.size();
-  }
-  void reserve(size_t size) {
-    index_.reserve(size);
-    value_.reserve(size);
-  }
-  void push_back(size_type idx, T val) {
-    index_.push_back(idx);
-    value_.push_back(val);
-  }
-  vector<size_type > index_;
-  vector<T >         value_;
-};
 
 class AbstractLayer {
  public:
@@ -245,16 +188,4 @@ class RQLayer : public AbstractLayer {
   T*               norm_; //
   T*               dict_; // shape of [R_, Ks, I_]
   CodeType *       code_; // shape of [O_, R_]
-};
-
-class SoftMaxCrossEntropy {
- public:
-  /**
-   * \param p SoftMax estimate
-   * \param y true labels for classification task,
-   * \return gradient with respect to the pre-SoftMax output
-   *         according to formula: g_i = p_i - y_i
-   */
-  static SparseVector compute(const SparseVector& p,
-                              const vector<size_type >& y, T* loss);
 };
