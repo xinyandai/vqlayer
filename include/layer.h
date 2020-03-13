@@ -11,6 +11,7 @@
 #include <random>
 #include <memory>
 #include <numeric>
+#include <utility>
 #include <mutex>
 #include <thread>
 
@@ -158,9 +159,12 @@ class VQLayer : public AbstractLayer {
                                   const Optimizer& optimizer) override;
 
  private:
-  const size_type  D_;     //sub dimension D_ = O_ / M_
+  const size_type  D_;     // sub dimension D_ = O_ / M_
   T*               dict_;  // shape of [M_, Ks, D_]
   CodeType *       code_;  // shape of [O_, M_]
+#ifdef NEQ
+  T*               norm_;  // shape of [O_, M_]
+#endif
 };
 
 /**

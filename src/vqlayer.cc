@@ -21,24 +21,39 @@ VQLayer::VQLayer(size_type I, size_type O,
 
   code_ = new CodeType[O_ * M_];
   dict_ = new T[M_ * Ks * D_];
+#ifdef NEQ
+  norm_ = new T[O_ * M_];
+#endif
   initialize();
 }
 
 VQLayer::VQLayer(const VQLayer& c) : VQLayer(c.I_, c.O_, c.type_) {
   std::memcpy(code_, c.code_, O_ * M_ * sizeof(CodeType));
   std::memcpy(dict_, c.dict_,  M_ * Ks * D_ * sizeof(T));
+#ifdef NEQ
+  std::memcpy(norm_, c.norm_,  M_ * D_ * sizeof(T));
+#endif
 }
 
 VQLayer::VQLayer(VQLayer&& c) noexcept:
                  AbstractLayer(c.I_, c.O_, c.type_),
+#ifdef NEQ
+                 norm_(c.norm_),
+#endif
                  D_(c.D_), code_(c.code_), dict_(c.dict_) {
   c.dict_ = nullptr;
   c.code_ = nullptr;
+#ifdef NEQ
+  c.norm_ = nullptr;
+#endif
 }
 
 VQLayer::~VQLayer() {
   delete [] code_;
   delete [] dict_;
+#ifdef NEQ
+  delete [] norm_;
+#endif
 }
 
 void VQLayer::initialize() {
@@ -49,19 +64,27 @@ void VQLayer::initialize() {
   for (int i = 0; i < M_ * O_; ++i) {
     *(code++) = static_cast<CodeType>(codes_dist(generator));
   }
-//#define LEARNED_CODE_BOOK
-#ifndef LEARNED_CODE_BOOK
   std::uniform_real_distribution<T > distribution(0.0, 1.0);
+#ifdef NEQ
+  T* norm = norm_;
+  for (int i = 0; i < O_ * M_; ++i) {
+    *(norm++) = distribution(generator);
+  }
+#endif
+// #define LEARNED_CODE_BOOK
+#ifndef LEARNED_CODE_BOOK
   T* w = dict_;
   for (int i = 0; i < M_ * Ks * D_; i++) {
       *(w++) = distribution(generator);
   }
-//  normalize_codebook(dict_, M_, Ks, D_);
 #else
   vq_codebook(dict_, /*n*/65536, Ks, D_, /*iter*/20);
   for (int i = 1; i < M_; ++i) {
     std::memcpy(&dict_[i * Ks * D_], dict_, Ks * D_ * sizeof(T));
   }
+#endif
+#ifdef NEQ
+  normalize_codebook(dict_, M_, Ks, D_);
 #endif
 }
 
@@ -75,7 +98,11 @@ T VQLayer::get_w(size_type i, size_type o)  {
     i -= D_;
   }
   CodeType c = code_[o * M_ + m];
+#ifdef NEQ
+  return dict_[m * Ks * D_ + c * D_ + i] * norm_[o * M_ + m];
+#else
   return dict_[m * Ks * D_ + c * D_ + i];
+#endif
 }
 
 SparseVector VQLayer::forward(const SparseVector& x) {
@@ -106,11 +133,19 @@ SparseVector VQLayer::forward(const SparseVector& x) {
   // Relu activation remove the negative output
   if (type_ == Activation::ReLu) {
     volatile CodeType* c = code;
+#ifdef NEQ
+    T* norm = norm_;
+#endif
     for (int o = 0; o < O_; ++o) {
       T mm = 0;
 #pragma unroll
       for (int m = 0; m < M_; ++m) {
+#ifdef NEQ
+        // *c = code[o * M_ + m] * norm_[o * M_ + m]
+        mm += tables[m][*(c++)] * (*(norm++));
+#else
         mm += tables[m][*(c++)];  // *c = code[o * M_ + m]
+#endif
       }
       if (mm > 0) {
         y.push_back(o, mm);
@@ -119,11 +154,19 @@ SparseVector VQLayer::forward(const SparseVector& x) {
   } else if (type_ == Activation::SoftMax) {
     T max_v = std::numeric_limits<T>::min();
     volatile CodeType* c = code;
+#ifdef NEQ
+    T* norm = norm_;
+#endif
     for (int o = 0; o < O_; ++o) {
       T mm = 0;
 #pragma unroll
       for (int m = 0; m < M_; ++m) {
+#ifdef NEQ
+        // *c = code[o * M_ + m] * norm_[o * M_ + m]
+        mm += tables[m][*(c++)] * (*(norm++));
+#else
         mm += tables[m][*(c++)];  // *c = code[o * M_ + m]
+#endif
       }
 
       y.push_back(o, mm);
@@ -167,8 +210,13 @@ SparseVector VQLayer::backward_x(const SparseVector& g,
       for (int o = 0; o < g.size(); ++o) {
         CodeType c = code[g.index_[o] * M_ + m];
         // TODO(Xinyan) to be optimized
+#ifdef NEQ
+        grad += g.value_[o] * dict[m * Ks * D_ + c * D_ +
+          x.index_[idx] - begin_idx] * norm_[g.index_[o] * M_ + m];
+#else
         grad += g.value_[o] * dict[m * Ks * D_ + c * D_ +
           x.index_[idx] - begin_idx];
+#endif
       }
       gx.value_[idx] = grad;
     }
@@ -193,11 +241,21 @@ void VQLayer::backward_w(const SparseVector& g,
       size_type end_idx = begin_idx + D_;
       auto& c = code[g.index_[o] * M_ + m];
       std::memcpy(w, &dict[m * Ks * D_ + c * D_], D_ * sizeof(T));
+#ifdef NEQ
+      T* norm = &norm_[g.index_[o] * M_ + m];
+      for (int dim = 0; dim < D_; ++dim) {
+        w[dim] *= *norm;
+      }
+#endif
       for (; x.size() > idx && x.index_[idx] < end_idx; idx++) {
         T grad = x.value_[idx] * g.value_[o];
         w[x.index_[idx] - begin_idx] -= lr * grad;
       }
+#ifdef NEQ
+      c = static_cast<CodeType>(nvq(norm, w, &dict[m * Ks * D_], Ks, D_));
+#else
       c = static_cast<CodeType>(vq(w, &dict[m * Ks * D_], Ks, D_));
+#endif
     }
   }
   delete [] w;

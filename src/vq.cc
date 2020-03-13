@@ -38,6 +38,11 @@ size_type vq(const T* w, const T* dict, size_type ks, size_type d) {
   return re;
 }
 
+size_type nvq(T* norm, T* w, const T* dict, size_type ks, size_type d) {
+  *norm = normalize(w, d);
+  return vq(w, dict, ks, d);
+}
+
 T norm_sqr(T* w, size_type d) {
   T norm_sqr = 0;
   for (int i = 0; i < d; ++i) {
