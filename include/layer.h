@@ -19,7 +19,6 @@
 #include "loss.h"
 #include "tensor.h"
 
-// #define ThreadSafe
 
 using std::mutex;
 using std::vector;
@@ -127,10 +126,6 @@ class Layer : public AbstractLayer {
  private:
   T*               weight_;
   T*               bias_;
-#ifdef ThreadSafe
-  vector<mutex >   weight_lock_;
-  vector<mutex >   bias_lock_;
-#endif
 };
 
 
