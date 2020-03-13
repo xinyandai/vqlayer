@@ -46,9 +46,6 @@ T AbstractLayer::get_w(size_type i, size_type o)  {
   throw std::runtime_error("get_w not implemented.");
 }
 
-T AbstractLayer::get_b(size_type o)  {
-  return bias_[0];
-}
 
 SparseVector AbstractLayer::forward(const SparseVector &x) {
   return default_forward(x);

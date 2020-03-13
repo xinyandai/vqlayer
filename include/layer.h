@@ -69,7 +69,9 @@ class AbstractLayer : public Interface {
   AbstractLayer(AbstractLayer&& layer) noexcept ;
 
   virtual T get_w(size_type i, size_type o);
-  T get_b(size_type o);
+  T get_b(size_type o) {
+    return bias_[o];
+  }
   void initialize();
 
   SparseVector forward(const SparseVector& x) override;
