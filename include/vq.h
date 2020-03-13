@@ -32,6 +32,10 @@ void normalize_codebook(T* dict, size_type m, size_type ks, size_type d);
 
 void kmeans(T* centroids, CodeType* code, const T* data,
             size_type n, size_type ks, size_type d, size_type iter);
+void kmeans_residual(T* centroids, CodeType* code,
+                     const T* data, const size_type M,
+                     const size_type n, const size_type ks,
+                     const size_type d, const size_type iter);
 
 void rq_codebook(T* centroid, size_type M, size_type n,
                  size_type ks, size_type d, size_type iter);

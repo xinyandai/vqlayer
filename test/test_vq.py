@@ -26,15 +26,18 @@ np.random.seed(1016)
 data = np.random.normal(size=(n, d))
 
 
-def kmeans(x, iter):
+def kmeans(x, iter_):
+    assert iter_ > 0
+    centers = x[:ks, :].copy()
+    assigned = None
+    for i in range(iter_):
+        assigned = vq(x, centers)[0]
+        centers = _vq.update_cluster_means(x, assigned, ks)[0]
+    cx = centers[assigned]
+    return assigned, centers, cx
 
-    centroids = data[:ks, :].copy()
-    for i in range(iter):
-        codes = vq(data, centroids)[0]
-        centroids = _vq.update_cluster_means(data, codes, ks)[0]
-    compressed = centroids[codes]
-    return codes, centroids, compressed
-codes, centroids, compressed = kmeans(data, 1)
+
+codes, centroids, _ = kmeans(data, 1)
 
 
 def rq(x, depth, iter):
@@ -43,14 +46,15 @@ def rq(x, depth, iter):
     codewords = []
     for _ in range(depth):
         code, codeword, compressed = kmeans(residual, iter)
+        assert residual.shape == compressed.shape
         residual -= compressed
         codes.append(code)
         codewords.append(codeword)
 
-    return np.stack(codes, axis=1), np.stack(codewords, axis=0), x - residual
+    return np.stack(codes, axis=0), np.stack(codewords, axis=0), x - residual
 
 
-depth = 4
+depth = 8
 r_codes, r_centroids, r_compressed = rq(data, depth, 1)
 
 dump("data", data)
