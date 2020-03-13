@@ -148,15 +148,15 @@ class Layer : public AbstractLayer {
 
 
 /**
-* \brief Vectorized Sparse Matrix Multiplication Layer
+* \brief Product Vector Quantized Sparse Matrix Multiplication Layer
 */
-class VQLayer : public AbstractLayer {
+class PQLayer : public AbstractLayer {
  public:
-  VQLayer(size_type I, size_type O, Activation type);
-  ~VQLayer() override;
+  PQLayer(size_type I, size_type O, Activation type);
+  ~PQLayer() override;
 
-  VQLayer(const VQLayer& l);
-  VQLayer(VQLayer&& l) noexcept;
+  PQLayer(const PQLayer& l);
+  PQLayer(PQLayer&& l) noexcept;
 
   void initialize();
   T get_w(size_type i, size_type o) override;
@@ -179,7 +179,7 @@ class VQLayer : public AbstractLayer {
 };
 
 /**
-* \brief Vectorized Sparse Matrix Multiplication Layer
+* \brief Residual Vector Quantized Sparse Matrix Multiplication Layer
 */
 class RQLayer : public AbstractLayer {
  public:

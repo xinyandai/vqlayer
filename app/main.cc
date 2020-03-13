@@ -445,7 +445,7 @@ int main(int argc, char* argv[])
   //***********************************
   // Parse Config File
   //***********************************
-  parseconfig(argc > 1 ? argv[1]  : "mnist.cfg");
+  parseconfig(argc > 1 ? argv[1]  : "../config/mnist.cfg");
 
   //***********************************
   // Initialize Network

@@ -13,7 +13,7 @@
 #include "../include/layer.h"
 
 
-VQLayer::VQLayer(size_type I, size_type O,
+PQLayer::PQLayer(size_type I, size_type O,
                  Activation type)
                  : AbstractLayer(I, O, type), D_(I_/M_) {
   if (I_ % M_ > 0)
@@ -27,7 +27,7 @@ VQLayer::VQLayer(size_type I, size_type O,
   initialize();
 }
 
-VQLayer::VQLayer(const VQLayer& c) : VQLayer(c.I_, c.O_, c.type_) {
+PQLayer::PQLayer(const PQLayer& c) : PQLayer(c.I_, c.O_, c.type_) {
   std::memcpy(code_, c.code_, O_ * M_ * sizeof(CodeType));
   std::memcpy(dict_, c.dict_,  M_ * Ks * D_ * sizeof(T));
 #ifdef NEQ
@@ -35,7 +35,7 @@ VQLayer::VQLayer(const VQLayer& c) : VQLayer(c.I_, c.O_, c.type_) {
 #endif
 }
 
-VQLayer::VQLayer(VQLayer&& c) noexcept:
+PQLayer::PQLayer(PQLayer&& c) noexcept:
                  AbstractLayer(c.I_, c.O_, c.type_),
 #ifdef NEQ
                  norm_(c.norm_),
@@ -48,7 +48,7 @@ VQLayer::VQLayer(VQLayer&& c) noexcept:
 #endif
 }
 
-VQLayer::~VQLayer() {
+PQLayer::~PQLayer() {
   delete [] code_;
   delete [] dict_;
 #ifdef NEQ
@@ -56,7 +56,7 @@ VQLayer::~VQLayer() {
 #endif
 }
 
-void VQLayer::initialize() {
+void PQLayer::initialize() {
   std::default_random_engine generator(1016);
 
   std::uniform_int_distribution<> codes_dist(0, Ks-1);
@@ -88,7 +88,7 @@ void VQLayer::initialize() {
 #endif
 }
 
-T VQLayer::get_w(size_type i, size_type o)  {
+T PQLayer::get_w(size_type i, size_type o)  {
   static size_type count = 0;
   if (count++ == 0)
     std::cerr << "Not efficient, for test only" << std::endl;
@@ -105,7 +105,7 @@ T VQLayer::get_w(size_type i, size_type o)  {
 #endif
 }
 
-SparseVector VQLayer::forward(const SparseVector& x) {
+SparseVector PQLayer::forward(const SparseVector& x) {
   SparseVector y;
 
   volatile T* dict = dict_;         // shape of [M_, Ks, D_]
@@ -190,7 +190,7 @@ SparseVector VQLayer::forward(const SparseVector& x) {
 }
 
 
-SparseVector VQLayer::backward_x(const SparseVector& g,
+SparseVector PQLayer::backward_x(const SparseVector& g,
                                        const SparseVector& x) {
   // Compute gradient  with respect to the input:
   // gx[I_] = w[I_, O_], g[O_].
@@ -224,7 +224,7 @@ SparseVector VQLayer::backward_x(const SparseVector& g,
   return gx;
 }
 
-void VQLayer::backward_w(const SparseVector& g,
+void PQLayer::backward_w(const SparseVector& g,
                                const SparseVector& x,
                                const Optimizer& optimizer) {
   // compute gradient and update with respect to the weight

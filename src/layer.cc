@@ -20,7 +20,8 @@ Layer::Layer(const Layer& c) : AbstractLayer(c) {
   std::memcpy(weight_, c.weight_, I_ * O_ * sizeof(T));
 }
 
-Layer::Layer(Layer&& c) noexcept : AbstractLayer(std::move(c)), weight_(c.weight_) {
+Layer::Layer(Layer&& c) noexcept : AbstractLayer(std::move(c)),
+                                   weight_(c.weight_) {
   c.weight_ = nullptr;
 }
 
