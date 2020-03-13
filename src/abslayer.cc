@@ -9,6 +9,36 @@
 #include <random>
 #include "../include/layer.h"
 
+AbstractLayer::AbstractLayer(size_type I, size_type O, Activation type)
+                           : I_(I), O_(O), type_(type) {
+
+  bias_ = new T[O];
+  initialize();
+}
+
+void AbstractLayer::initialize() {
+  std::default_random_engine generator(1016);
+  std::uniform_real_distribution<T > dist(0.0f, 1.0f / std::sqrt(I_ / 2.0f));
+  T* b = bias_;
+  for (int o = 0; o < O_; ++o) {
+    *(b++) = dist(generator);
+  }
+}
+
+AbstractLayer::AbstractLayer(const AbstractLayer& c)
+                           : AbstractLayer(c.I_, c.O_, c.type_) {
+  std::memcpy(bias_, c.bias_,  O_ * sizeof(T));
+}
+
+AbstractLayer::AbstractLayer(AbstractLayer&& c) noexcept
+    : AbstractLayer(c.I_, c.O_, c.type_) {
+  bias_ = c.bias_;
+  c.bias_ = nullptr;
+}
+
+AbstractLayer::~AbstractLayer() {
+  delete [] bias_;
+}
 
 
 
@@ -17,7 +47,24 @@ T AbstractLayer::get_w(size_type i, size_type o)  {
 }
 
 T AbstractLayer::get_b(size_type o)  {
-  return 0;
+  return bias_[0];
+}
+
+SparseVector AbstractLayer::forward(const SparseVector &x) {
+  return default_forward(x);
+}
+
+SparseVector AbstractLayer::backward(const SparseVector& g,
+                                     const SparseVector& x,
+                                     const Optimizer& optimizer,
+                                     bool compute_gx ) {
+  SparseVector gx;
+  if (compute_gx) {
+    gx = backward_x(g, x);
+  }
+  backward_w(g, x, optimizer);
+  backward_b(g, x, optimizer);
+  return gx;
 }
 
 SparseVector AbstractLayer::default_forward(const SparseVector &x) {
@@ -66,19 +113,6 @@ SparseVector AbstractLayer::default_forward(const SparseVector &x) {
   return y;
 }
 
-
-SparseVector AbstractLayer::backward(const SparseVector& g,
-                                     const SparseVector& x,
-                                     const Optimizer& optimizer,
-                                     bool compute_gx ) {
-  SparseVector gx;
-  if (compute_gx) {
-    gx = backward_x(g, x);
-  }
-  backward_w(g, x, optimizer);
-  return gx;
-}
-
 SparseVector AbstractLayer::default_backward_x(const SparseVector &g,
                                                const SparseVector &x) {
   // Compute gradient  with respect to the input:
@@ -95,9 +129,22 @@ SparseVector AbstractLayer::default_backward_x(const SparseVector &g,
   }
   return gx;
 }
-
 void AbstractLayer::backward_w(const SparseVector& g,
                                const SparseVector& x,
                                const Optimizer& optimizer) {
   throw std::runtime_error("backward for weights is not implemented");
+}
+
+void AbstractLayer::backward_b(const SparseVector& g,
+                               const SparseVector& x,
+                               const Optimizer& optimizer) {
+  T lr = optimizer.lr;
+  SparseVector gx;
+  volatile T* bias = bias_;
+  // update bias (gradient of bias is equivalent to g)
+  for (int i = 0; i < g.size(); ++i) {
+    T grad = g.value_[i];
+    size_type index = g.index_[i];
+    bias[index] -= lr * grad;
+  }
 }

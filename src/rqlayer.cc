@@ -108,7 +108,7 @@ SparseVector RQLayer::forward(const SparseVector& x) {
     volatile T* norm = norm_;
     volatile CodeType* c = code;
     for (int o = 0; o < O_; ++o) {
-      T mm = 0;
+      T mm = get_b(o);
 #pragma unroll
       for (int m = 0; m < M_; ++m) {
         mm += tables[m][*(c++)];  // *c = code[o * M_ + m]
@@ -123,7 +123,7 @@ SparseVector RQLayer::forward(const SparseVector& x) {
     volatile T* norm = norm_;
     volatile CodeType* c = code;
     for (int o = 0; o < O_; ++o) {
-      T mm = 0;
+      T mm = get_b(o);
 #pragma unroll
       for (int m = 0; m < M_; ++m) {
         mm += tables[m][*(c++)];  // *c = code[o * M_ + m]

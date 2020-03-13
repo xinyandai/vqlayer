@@ -12,28 +12,20 @@
 Layer::Layer(size_type I, size_type O,
              Activation type) : AbstractLayer(I, O, type) {
   weight_ = new T[I * O];
-  if (weight_ == nullptr)
-    throw std::runtime_error("Failed to allocate memory for weight");
-  bias_ = new T[O];
-  if (bias_ == nullptr)
-    throw std::runtime_error("Failed to allocate memory for bias");
   initialize();
 }
 
-Layer::Layer(const Layer& c) : Layer(c.I_, c.O_, c.type_) {
+Layer::Layer(const Layer& c) : AbstractLayer(c) {
+  weight_ = new T[I_ * O_];
   std::memcpy(weight_, c.weight_, I_ * O_ * sizeof(T));
-  std::memcpy(bias_, c.bias_,  O_ * sizeof(T));
 }
 
-Layer::Layer(Layer&& c) noexcept : AbstractLayer(c.I_, c.O_, c.type_),
-                                   weight_(c.weight_), bias_(c.bias_) {
+Layer::Layer(Layer&& c) noexcept : AbstractLayer(std::move(c)), weight_(c.weight_) {
   c.weight_ = nullptr;
-  c.bias_ = nullptr;
 }
 
 Layer::~Layer() {
   delete [] weight_;
-  delete [] bias_;
 }
 
 void Layer::initialize(const vector<T >& w, const vector<T >& b) {
@@ -48,6 +40,7 @@ void Layer::initialize(const vector<T >& w, const vector<T >& b) {
 }
 
 void Layer::initialize() {
+  AbstractLayer::initialize();
   std::default_random_engine generator(1016);
   std::uniform_real_distribution<T > dist(0.0f, 1.0f / std::sqrt(I_ / 2.0f));
   T* w = weight_;
@@ -56,20 +49,11 @@ void Layer::initialize() {
       *(w++) = dist(generator);
     }
   }
-  T* b = bias_;
-  for (int o = 0; o < O_; ++o) {
-    *(b++) = dist(generator);
-  }
 }
 
 T Layer::get_w(size_type i, size_type o)  {
   return weight_[i * O_ + o];
 }
-
-T Layer::get_b(size_type o)  {
-  return bias_[o];
-}
-
 
 SparseVector Layer::forward(const SparseVector& x) {
   return AbstractLayer::default_forward(x);
@@ -88,7 +72,6 @@ void Layer::backward_w(const SparseVector& g,
   T lr = optimizer.lr;
   SparseVector gx;
   volatile T* weight = weight_;
-  volatile T* bias = bias_;
 
   // compute gradient and update with respect to the weight
   // gw[I_, O_] = x[1, I_]' g[1, O_]
@@ -98,12 +81,6 @@ void Layer::backward_w(const SparseVector& g,
       T grad = x.value_[i] * g.value_[o];
       w[g.index_[o]] -= lr * grad;
     }
-  }
-  // update bias (gradient of bias is equivalent to g)
-  for (int i = 0; i < g.size(); ++i) {
-    T grad = g.value_[i];
-    size_type index = g.index_[i];
-    bias[index] -= lr * grad;
   }
 }
 

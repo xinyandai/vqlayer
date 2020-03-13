@@ -33,50 +33,66 @@ typedef struct {
   T lr;
 } Optimizer;
 
-
-
-class AbstractLayer {
+class Interface {
  public:
-  AbstractLayer(size_type I, size_type O, Activation type)
-              : I_(I), O_(O), type_(type) {}
-  virtual ~AbstractLayer() = default;
+  /**
+ * \brief y = \sigma(xW + b), where sigma is the activation function
+ * \param x Sparse Vector
+ * \return y Sparse Vector
+ */
+  virtual SparseVector forward(const SparseVector& x) = 0;
+  /**
+ * \brief calculated gradient with respect to weight and input
+ *        according to formula: g_W = gx; g_b = g; g_I = gW';
+ *        update the parameters with Optimization Algorithm:
+ *        P -=  lr * Gradient
+ * \param a current layer output activation
+ * \param x sparse vector, memorize input for calculate gradient
+ *        with respect to weight_
+ *
+ * \param g gradient with respect to the output of forward
+ * \param compute_gx should compute gradient with respect to x
+ * \return gradient with respect to x
+ */
+  virtual SparseVector backward(const SparseVector& g,
+                                const SparseVector& x,
+                                const Optimizer& optimizer,
+                                bool compute_gx) = 0;
+};
+
+class AbstractLayer : public Interface {
+ public:
+  AbstractLayer(size_type I, size_type O, Activation type);
+  virtual ~AbstractLayer() ;
+
+  AbstractLayer(const AbstractLayer& layer);
+  AbstractLayer(AbstractLayer&& layer) noexcept ;
 
   virtual T get_w(size_type i, size_type o);
-  virtual T get_b(size_type o);
-  /**
-   * \brief y = \sigma(xW + b), where sigma is the activation function
-   * \param x Sparse Vector
-   * \return y Sparse Vector
-   */
-  virtual SparseVector forward(const SparseVector& x) = 0;
+  T get_b(size_type o);
+  void initialize();
 
+  SparseVector forward(const SparseVector& x) override;
+  SparseVector backward(const SparseVector& g,
+                        const SparseVector& x,
+                        const Optimizer& optimizer,
+                        bool compute_gx) override ;
+
+  virtual SparseVector backward_x(const SparseVector& g,
+                                  const SparseVector& x) = 0;
+  virtual void backward_w(const SparseVector& g,
+                          const SparseVector& x,
+                          const Optimizer& optimizer);
+
+  virtual void backward_b(const SparseVector& g,
+                          const SparseVector& x,
+                          const Optimizer& optimizer);
   /**
    * \brief default implementation for forward(x)
    * \param x
    * \return
    */
   SparseVector default_forward(const SparseVector &x);
-
-  /**
-   * \brief calculated gradient with respect to weight and input
-   *        according to formula: g_W = gx; g_b = g; g_I = gW';
-   *        update the parameters with Optimization Algorithm:
-   *        P -=  lr * Gradient
-   * \param a current layer output activation
-   * \param x sparse vector, memorize input for calculate gradient
-   *        with respect to weight_
-   *
-   * \param g gradient with respect to the output of forward
-   * \param compute_gx should compute gradient with respect to x
-   * \return gradient with respect to x
-   */
-  virtual SparseVector backward(const SparseVector& g,
-                                const SparseVector& x,
-                                const Optimizer& optimizer,
-                                bool compute_gx);
-  virtual SparseVector backward_x(const SparseVector& g,
-                                const SparseVector& x) = 0;
-
   /**
    * \brief default implementation for backward_x(g, x)
    * \param g
@@ -85,14 +101,13 @@ class AbstractLayer {
    */
   SparseVector default_backward_x(const SparseVector &g, const SparseVector &x);
 
-  virtual void backward_w(const SparseVector& g,
-                          const SparseVector& x,
-                          const Optimizer& optimizer);
+
 
  public:
   const size_type  I_;
   const size_type  O_;
   const Activation type_;
+  T*               bias_;
 };
 
 /**
@@ -113,7 +128,7 @@ class Layer : public AbstractLayer {
   void initialize();
 
   T get_w(size_type i, size_type o) override;
-  T get_b(size_type o) override;
+
   SparseVector forward(const SparseVector& x) override;
 
   SparseVector backward_x(const SparseVector& g,
@@ -125,7 +140,6 @@ class Layer : public AbstractLayer {
 
  private:
   T*               weight_;
-  T*               bias_;
 };
 
 
@@ -181,8 +195,8 @@ class RQLayer : public AbstractLayer {
                           const SparseVector& x) override;
 
   void backward_w(const SparseVector& g,
-                          const SparseVector& x,
-                          const Optimizer& optimizer) override;
+                  const SparseVector& x,
+                  const Optimizer& optimizer) override;
 
  private:
   T*               norm_;  //

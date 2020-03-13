@@ -137,7 +137,7 @@ SparseVector VQLayer::forward(const SparseVector& x) {
     T* norm = norm_;
 #endif
     for (int o = 0; o < O_; ++o) {
-      T mm = 0;
+      T mm = get_b(o);
 #pragma unroll
       for (int m = 0; m < M_; ++m) {
 #ifdef NEQ
@@ -158,7 +158,7 @@ SparseVector VQLayer::forward(const SparseVector& x) {
     T* norm = norm_;
 #endif
     for (int o = 0; o < O_; ++o) {
-      T mm = 0;
+      T mm = get_b(o);
 #pragma unroll
       for (int m = 0; m < M_; ++m) {
 #ifdef NEQ
