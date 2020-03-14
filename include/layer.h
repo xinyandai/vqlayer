@@ -66,7 +66,7 @@ class AbstractLayer : public Interface {
   virtual ~AbstractLayer() ;
 
   AbstractLayer(const AbstractLayer& layer);
-  AbstractLayer(AbstractLayer&& layer) noexcept ;
+  AbstractLayer(AbstractLayer&& layer) noexcept;
 
   virtual T get_w(size_type i, size_type o);
   T get_b(size_type o) {
@@ -78,7 +78,7 @@ class AbstractLayer : public Interface {
   SparseVector backward(const SparseVector& g,
                         const SparseVector& x,
                         const Optimizer& optimizer,
-                        bool compute_gx) override ;
+                        bool compute_gx) override;
 
   virtual SparseVector backward_x(const SparseVector& g,
                                   const SparseVector& x) = 0;
@@ -101,7 +101,8 @@ class AbstractLayer : public Interface {
    * \param x
    * \return
    */
-  SparseVector default_backward_x(const SparseVector &g, const SparseVector &x);
+  SparseVector default_backward_x(const SparseVector &g,
+                                  const SparseVector &x);
 
 
 
@@ -163,11 +164,11 @@ class PQLayer : public AbstractLayer {
   SparseVector forward(const SparseVector& x) override;
 
   SparseVector backward_x(const SparseVector& g,
-                                  const SparseVector& x) override;
+                          const SparseVector& x) override;
 
   void backward_w(const SparseVector& g,
-                                  const SparseVector& x,
-                                  const Optimizer& optimizer) override;
+                  const SparseVector& x,
+                  const Optimizer& optimizer) override;
 
  private:
   const size_type  D_;     // sub dimension D_ = O_ / M_

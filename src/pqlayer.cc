@@ -191,7 +191,7 @@ SparseVector PQLayer::forward(const SparseVector& x) {
 
 
 SparseVector PQLayer::backward_x(const SparseVector& g,
-                                       const SparseVector& x) {
+                                 const SparseVector& x) {
   // Compute gradient  with respect to the input:
   // gx[I_] = w[I_, O_], g[O_].
   // Previous layer's activation function must be ReLu,
@@ -225,8 +225,8 @@ SparseVector PQLayer::backward_x(const SparseVector& g,
 }
 
 void PQLayer::backward_w(const SparseVector& g,
-                               const SparseVector& x,
-                               const Optimizer& optimizer) {
+                         const SparseVector& x,
+                         const Optimizer& optimizer) {
   // compute gradient and update with respect to the weight
   // gw[i_, o_] = x[1, i_]' g[1, o_]
   T* const dict = dict_;         // shape of [M_, Ks, D_]
