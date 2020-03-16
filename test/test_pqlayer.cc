@@ -7,27 +7,11 @@
 */
 #include "test.h"
 
-class FakeVQLayer : public PQLayer {
- public:
-
-  ~FakeVQLayer() override = default;
-
-  FakeVQLayer(const PQLayer& l) : PQLayer(l) {}
-
-  SparseVector forward(const SparseVector& x) override {
-    return AbstractLayer::default_forward(x);
-  }
-
-  SparseVector backward_x(const SparseVector& g,
-                          const SparseVector& x) override {
-    return AbstractLayer::default_backward_x(g, x);
-  }
-};
 
 void test_vq(Activation activation, int seed) {
   const size_type I = 16, O = 16;
   PQLayer rq(I, O, activation);
-  FakeVQLayer fakeVQLayer(rq);
+  FakeLayer fakeVQLayer(rq);
 
   vector<T > x(I, 0);
   vector<T > g(O, 0);

@@ -5,6 +5,25 @@
 #include <string>
 #include "../include/layer.h"
 
+
+class FakeLayer : public Layer {
+ public:
+  explicit FakeLayer(const AbstractLayer& l) : Layer(l.I_, l.O_, l.type_) {
+    T* w = weight_;
+    for (int i = 0; i < I_; ++i) {
+      for (int o = 0; o < O_; ++o) {
+        *(w++) = l.get_w(i, o);
+      }
+    }
+
+    T* b = bias_;
+    for (int i = 0; i < O_; ++i) {
+      *(b++) = l.get_b(i);
+    }
+  }
+};
+
+
 void dump(const SparseVector& s) {
   for (int i = 0; i < s.size(); ++i) {
     std::cout << s.index_[i] << " : " << s.value_[i] <<"\t";
@@ -39,7 +58,7 @@ void compare(std::string variable,
       break;
     }
   }
-  std::cout << (success?"[PASS]":"[FAIL]") ;
+  std::cout << (success?"[PASS]":"[FAIL]");
   std::cout << "\t" << variable << std::endl;
   std::cout << "\t\t";
   dump(s, size);

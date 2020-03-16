@@ -42,7 +42,7 @@ AbstractLayer::~AbstractLayer() {
 
 
 
-T AbstractLayer::get_w(size_type i, size_type o)  {
+T AbstractLayer::get_w(size_type i, size_type o) const {
   throw std::runtime_error("get_w not implemented.");
 }
 

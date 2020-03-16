@@ -70,7 +70,7 @@ void RQLayer::initialize() {
 #endif
 }
 
-T RQLayer::get_w(size_type i, size_type o)  {
+T RQLayer::get_w(size_type i, size_type o) const {
   static size_type count = 0;
   if (count++ == 0)
     std::cerr << "Not efficient, for test only" << std::endl;

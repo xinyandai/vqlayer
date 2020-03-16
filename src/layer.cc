@@ -52,7 +52,7 @@ void Layer::initialize() {
   }
 }
 
-T Layer::get_w(size_type i, size_type o)  {
+T Layer::get_w(size_type i, size_type o) const {
   return weight_[i * O_ + o];
 }
 
