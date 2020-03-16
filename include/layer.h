@@ -68,8 +68,8 @@ class AbstractLayer : public Interface {
   AbstractLayer(const AbstractLayer& layer);
   AbstractLayer(AbstractLayer&& layer) noexcept;
 
-  virtual T get_w(size_type i, size_type o);
-  T get_b(size_type o) {
+  virtual T get_w(size_type i, size_type o) const;
+  T get_b(size_type o) const {
     return bias_[o];
   }
   void initialize();
@@ -110,6 +110,7 @@ class AbstractLayer : public Interface {
   const size_type  I_;
   const size_type  O_;
   const Activation type_;
+ protected:
   T*               bias_;
 };
 
@@ -130,7 +131,7 @@ class Layer : public AbstractLayer {
   void initialize(const vector<T >& w, const vector<T >& b);
   void initialize();
 
-  T get_w(size_type i, size_type o) override;
+  T get_w(size_type i, size_type o) const override;
 
   SparseVector forward(const SparseVector& x) override;
 
@@ -141,7 +142,7 @@ class Layer : public AbstractLayer {
                   const SparseVector& x,
                   const Optimizer& optimizer) override;
 
- private:
+ protected:
   T*               weight_;
 };
 
@@ -160,7 +161,7 @@ class PQLayer : public AbstractLayer {
   PQLayer(PQLayer&& l) noexcept;
 
   void initialize();
-  T get_w(size_type i, size_type o) override;
+  T get_w(size_type i, size_type o) const override;
   SparseVector forward(const SparseVector& x) override;
 
   SparseVector backward_x(const SparseVector& g,
@@ -191,7 +192,7 @@ class RQLayer : public AbstractLayer {
   RQLayer(RQLayer&& l) noexcept;
 
   void initialize();
-  T get_w(size_type i, size_type o) override;
+  T get_w(size_type i, size_type o) const override;
   SparseVector forward(const SparseVector& x) override;
 
   SparseVector backward_x(const SparseVector& g,
@@ -201,7 +202,7 @@ class RQLayer : public AbstractLayer {
                   const SparseVector& x,
                   const Optimizer& optimizer) override;
 
- private:
+ protected:
   T*               norm_;  //
   T*               dict_;  // shape of [R_, Ks, I_]
   CodeType *       code_;  // shape of [O_, R_]
