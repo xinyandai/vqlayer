@@ -38,7 +38,7 @@ void test_pq(int seed) {
 }
 
 int main() {
-  int i = 808;
+  int i = 1016;
   test_pq<Activation::ReLu, true, true>(i++);
   test_pq<Activation::ReLu, true, false>(i++);
   test_pq<Activation::ReLu, false, false>(i++);
