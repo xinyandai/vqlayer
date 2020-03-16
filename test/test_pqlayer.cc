@@ -42,7 +42,7 @@ int main() {
   test_pq<Activation::ReLu, true, true>(i++);
   test_pq<Activation::ReLu, true, false>(i++);
   test_pq<Activation::ReLu, false, false>(i++);
-  test_pq<Activation::ReLu, true, true>(i++);
+  test_pq<Activation::ReLu, false, false>(i++);
 
   test_pq<Activation::SoftMax, true, true>(i++);
   test_pq<Activation::SoftMax, true, false>(i++);

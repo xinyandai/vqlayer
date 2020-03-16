@@ -20,8 +20,10 @@ class PQLayer : public AbstractLayer<Act, Select> {
 
     code_ = new CodeType[this->O_ * M_];
     dict_ = new T[M_ * Ks * D_];
-    if (NQ)
+    if constexpr (NQ)
       norm_ = new T[this->O_ * M_];
+    else
+      norm_ = nullptr;
     initialize();
   }
   ~PQLayer() {
