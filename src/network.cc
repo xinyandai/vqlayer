@@ -7,28 +7,36 @@
 using namespace std;
 
 
-Network::Network( int *sizesOfLayers, vector<Activation >& layersTypes,
-                  int noOfLayers, int batchSize, const Optimizer& optimizer,
-                  int inputdim, int* K, int* L, int*
-                  RangePow, float* Sparsity) : optimizer_(optimizer){
-  layer_size_ = sizesOfLayers;
-  num_layers_ = noOfLayers;
-  batch_size_ = batchSize;
-  input_dim_ = inputdim;
+Network::Network(int *layer_size, int num_layers, int batch_size,
+                 const Optimizer& optimizer, int input_dim)
+                 : optimizer_(optimizer){
+  layer_size_ = layer_size;
+  num_layers_ = num_layers;
+  batch_size_ = batch_size;
+  input_dim_ = input_dim;
   layer_.reserve(num_layers_);
-  std::cout << "building layer " << inputdim << " x " << layer_size_[0] << std::endl;
-  layer_.emplace_back(new Layer(input_dim_, layer_size_[0], layersTypes[0]));
-  for (int i = 1; i < num_layers_; ++i) {
-    std::cout << "building layer " << layer_size_[i-1] << " x " << layer_size_[i] << std::endl;
-    layer_.emplace_back(new Layer(layer_size_[i-1], layer_size_[i], layersTypes[i]));
+  std::cout << "building layer " << input_dim
+            << " x " << layer_size_[0] << std::endl;
+  layer_.emplace_back(new Layer<ReLu, false>(
+            input_dim_, layer_size_[0]));
+  int i = 1;
+  for (; i < num_layers_-1; ++i) {
+    std::cout << "building layer " << layer_size_[i-1]
+              << " x " << layer_size_[i] << std::endl;
+    layer_.emplace_back(new Layer<ReLu, false>(
+              layer_size_[i-1], layer_size_[i]));
   }
+  std::cout << "building layer " << layer_size_[i-1]
+            << " x " << layer_size_[i] << std::endl;
+  layer_.emplace_back(new PQLayer<SoftMax, true, true>(
+            layer_size_[i-1], layer_size_[i]));
   std::cout << "building network, done" << std::endl;
 }
 
 Network::~Network() = default;
 
-int Network::predictClass(int **inputIndices, float **inputValues,
-                          int *lengths, int **labels, int *labelsize) {
+int Network::predict(int **input_indices, float **input_values,
+                     int *lengths, int **labels, int *labelsize) {
 //  std::cout << "predict \t";
   int correctPred = 0;
 #ifndef DEBUG
@@ -36,7 +44,8 @@ int Network::predictClass(int **inputIndices, float **inputValues,
 #endif
   for (int b = 0; b < batch_size_; ++b) {
     // construct from input
-    SparseVector activation = SparseVector(inputIndices[b], inputValues[b], lengths[b]);
+    SparseVector activation = SparseVector(
+                                input_indices[b], input_values[b], lengths[b]);
     vector<int > labels_(labels[b], labels[b]+labelsize[b]);
     // forward pass for one sample
     for (int i = 0; i < num_layers_; ++i) {
@@ -54,7 +63,8 @@ int Network::predictClass(int **inputIndices, float **inputValues,
       }
     }
 
-    if (std::find (labels[b], labels[b]+labelsize[b], predict_class)!= labels[b]+labelsize[b]) {
+    if (std::find (labels[b], labels[b]+labelsize[b], predict_class)
+        != labels[b]+labelsize[b]) {
       correctPred++;
     }
   }
@@ -62,9 +72,9 @@ int Network::predictClass(int **inputIndices, float **inputValues,
 }
 
 
-float Network::ProcessInput(int **inputIndices, float **inputValues,
-                            int *lengths, int **labels,
-                            int *labelsize) {
+float Network::train(int **input_indices, float **input_values,
+                     int *lengths, int **labels,
+                     int *label_size) {
 // std::cout << "training\t";
   float loss = 0;
 #ifndef DEBUG
@@ -73,11 +83,11 @@ float Network::ProcessInput(int **inputIndices, float **inputValues,
   for (int b = 0; b < batch_size_; ++b) {
     vector<SparseVector > activations ((size_t)num_layers_ + 1);
     // construct from input
-    activations[0] = SparseVector(inputIndices[b], inputValues[b], lengths[b]);
-    vector<int > labels_(labels[b], labels[b]+labelsize[b]);
+    activations[0] = SparseVector(input_indices[b], input_values[b], lengths[b]);
+    vector<int > labels_(labels[b], labels[b]+label_size[b]);
     // forward pass for one sample
     for (int i = 0; i < num_layers_; ++i) {
-      activations[i+1] = layer_[i]->forward(activations[i]) ;
+      activations[i+1] = layer_[i]->forward(activations[i]);
     }
     // compute loss
     float loss_b = 0;
@@ -100,7 +110,7 @@ float Network::ProcessInput(int **inputIndices, float **inputValues,
 }
 
 
-void Network::saveWeights(string file) {
+void Network::save_weight(string file) {
 }
 
 

@@ -23,7 +23,7 @@ void test_smm_relu() {
 
   size_type I = 2, O = 2;
   Optimizer optimizer = {0.1};
-  Layer layer(I, O, Activation::ReLu);
+  Layer<ReLu, false> layer(I, O);
   layer.initialize(w_, b_);
   SparseVector x = x_, g = g_;
 
@@ -65,7 +65,7 @@ void test_smm_softmax() {
                      -0.9726298768265245 };
   T loss_ = 3.59830325563001;
 
-  Layer layer(I, O, Activation::SoftMax);
+  Layer<SoftMax, false> layer(I, O);
   layer.initialize(w_, b_);
   SparseVector x = x_;
   T loss;

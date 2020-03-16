@@ -2,18 +2,20 @@
 #include <chrono>
 #include <vector>
 #include "iostream"
+#include "string"
 #include "layer.h"
 
 using namespace std;
 
-
 class Network {
  public:
-  Network(int* sizesOfLayers, vector<Activation >& layersTypes, int noOfLayers, int batchsize,
-      const Optimizer& optimizer, int inputdim, int* K, int* L, int* RangePow, float* Sparsity);
-  int predictClass(int ** inputIndices, float ** inputValues, int * length, int ** labels, int *labelsize);
-  float ProcessInput(int** inputIndices, float** inputValues, int* lengths, int ** label, int *labelsize);
-  void saveWeights(string file);
+  Network(int* layer_size, int num_layers, int batch_size,
+          const Optimizer& optimizer, int input_dim);
+  int predict(int **input_indices, float **input_values,
+              int *length, int **labels, int *label_size);
+  float train(int **input_indices, float **input_values,
+              int *lengths, int **labels, int *label_size);
+  void save_weight(string file);
   ~Network();
  private:
   size_type              batch_size_;

@@ -16,9 +16,7 @@
 #include "tensor.h"
 
 #define CodeType uint8_t
-#define Ks 256
-#define M_ 2
-#define NEQ
+
 
 size_type vq(const T* w, const T* dict, size_type ks, size_type d);
 size_type nvq(T* norm, T* w, const T* dict, size_type ks, size_type d);

@@ -7,11 +7,11 @@
 */
 #include "test.h"
 
-
-void test_vq(Activation activation, int seed) {
+template <Activation Act, bool Select, bool NQ>
+void test_pq(int seed) {
   const size_type I = 16, O = 16;
-  PQLayer rq(I, O, activation);
-  FakeLayer fakeVQLayer(rq);
+  PQLayer<Act, Select, NQ> rq(I, O);
+  FakeLayer<Act, Select> fakeVQLayer(rq);
 
   vector<T > x(I, 0);
   vector<T > g(O, 0);
@@ -38,6 +38,14 @@ void test_vq(Activation activation, int seed) {
 }
 
 int main() {
-  test_vq(Activation::ReLu, 1016);
-  test_vq(Activation::SoftMax, 808);
+  int i = 808;
+  test_pq<Activation::ReLu, true, true>(i++);
+  test_pq<Activation::ReLu, true, false>(i++);
+  test_pq<Activation::ReLu, false, false>(i++);
+  test_pq<Activation::ReLu, true, true>(i++);
+
+  test_pq<Activation::SoftMax, true, true>(i++);
+  test_pq<Activation::SoftMax, true, false>(i++);
+  test_pq<Activation::SoftMax, false, false>(i++);
+  test_pq<Activation::SoftMax, true, true>(i++);
 }

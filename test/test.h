@@ -5,19 +5,19 @@
 #include <string>
 #include "../include/layer.h"
 
-
-class FakeLayer : public Layer {
+template <Activation Act, bool Select>
+class FakeLayer : public Layer<Act, Select> {
  public:
-  explicit FakeLayer(const AbstractLayer& l) : Layer(l.I_, l.O_, l.type_) {
-    T* w = weight_;
-    for (int i = 0; i < I_; ++i) {
-      for (int o = 0; o < O_; ++o) {
+  explicit FakeLayer(const AbstractLayer<Act, Select>& l) : Layer<Act, Select>(l.I_, l.O_) {
+    T* w = this->weight_;
+    for (int i = 0; i < this->I_; ++i) {
+      for (int o = 0; o < this->O_; ++o) {
         *(w++) = l.get_w(i, o);
       }
     }
 
-    T* b = bias_;
-    for (int i = 0; i < O_; ++i) {
+    T* b = this->bias_;
+    for (int i = 0; i < this->O_; ++i) {
       *(b++) = l.get_b(i);
     }
   }

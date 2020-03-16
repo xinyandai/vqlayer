@@ -4,11 +4,11 @@
 
 #include "test.h"
 
-
-void test_rq(Activation activation, int seed) {
+template <Activation Act, bool Select, bool NQ>
+void test_rq(int seed) {
   const size_type I = 16, O = 16;
-  RQLayer rq(I, O, activation);
-  FakeLayer fakeRQLayer(rq);
+  RQLayer<Act, Select, NQ> rq(I, O);
+  FakeLayer<Act, Select> fakeRQLayer(rq);
 
   vector<T > x(I, 0);
   vector<T > g(O, 0);
@@ -35,6 +35,14 @@ void test_rq(Activation activation, int seed) {
 }
 
 int main() {
-  test_rq(Activation::ReLu, 1016);
-  test_rq(Activation::SoftMax, 808);
+  int i = 808;
+  test_rq<Activation::ReLu, true, true>(i++);
+  test_rq<Activation::ReLu, true, false>(i++);
+  test_rq<Activation::ReLu, false, false>(i++);
+  test_rq<Activation::ReLu, true, true>(i++);
+
+  test_rq<Activation::SoftMax, true, true>(i++);
+  test_rq<Activation::SoftMax, true, false>(i++);
+  test_rq<Activation::SoftMax, false, false>(i++);
+  test_rq<Activation::SoftMax, true, true>(i++);
 }

@@ -317,7 +317,7 @@ void EvalDataSVM(int numBatchesTest,  Network* _mynet, int iter){
     }
 
 //    std::cout << Batchsize << " records, with "<< num_features << " features and " << num_labels << " labels" << std::endl;
-    auto correctPredict = _mynet->predictClass(records, values, sizes, labels, labelsize);
+    auto correctPredict = _mynet->predict(records, values, sizes, labels, labelsize);
     totCorrect += correctPredict;
 //    std::cout <<" iter "<< i << ": " << totCorrect*1.0/(Batchsize*(i+1)) << " correct" << std::endl;
 
@@ -416,7 +416,7 @@ void ReadDataSVM(int numBatches,  Network* _mynet, int epoch){
     auto t1 = std::chrono::high_resolution_clock::now();
 
 
-    auto loss = _mynet->ProcessInput(records, values, sizes, labels, labelsize);
+    auto loss = _mynet->train(records, values, sizes, labels, labelsize);
 
     auto t2 = std::chrono::high_resolution_clock::now();
 
@@ -453,13 +453,11 @@ int main(int argc, char* argv[])
   int numBatches = totRecords/Batchsize;
   int numBatchesTest = totRecordsTest/Batchsize;
 
-  vector<Activation > layersTypes(numLayer, Activation::ReLu);
-  layersTypes[numLayer-1] = Activation::SoftMax;
 
 
   auto t1 = std::chrono::high_resolution_clock::now();
   Optimizer optimizer = {Lr}; // TODO modify config file later
-  Network *_mynet = new Network(sizesOfLayers, layersTypes, numLayer, Batchsize, optimizer, InputDim, K, L, RangePow, Sparsity);
+  Network *_mynet = new Network(sizesOfLayers, numLayer, Batchsize, optimizer, InputDim);
   auto t2 = std::chrono::high_resolution_clock::now();
   float timeDiffInMiliseconds = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
   std::cout << "Network Initialization takes " << timeDiffInMiliseconds/1000 << " milliseconds" << std::endl;
@@ -481,7 +479,7 @@ int main(int argc, char* argv[])
     ReadDataSVM(numBatches, _mynet, e);
     // test
     EvalDataSVM(numBatchesTest, _mynet, (e+1)*numBatches);
-    _mynet->saveWeights(savedWeights);
+    _mynet->save_weight(savedWeights);
 
   }
 
