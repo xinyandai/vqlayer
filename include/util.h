@@ -37,7 +37,15 @@ class TopSelector {
     }
   }
   
-  SparseVector select() const {
+  SparseVector select() {
+
+    std::sort(
+      heap_.begin(),
+      heap_.end(),
+      [](const pair<V, ID >& a, const pair<V, ID>& b) {
+        return a.second < b.second;
+      });
+
     SparseVector selected;
     selected.reserve(heap_.size());
     for (auto& value_id : heap_) {
@@ -49,6 +57,7 @@ class TopSelector {
   ID k() {
     return k_;
   }
+
  private:
   ID                   k_;
   vector<pair<V, ID> > heap_;
