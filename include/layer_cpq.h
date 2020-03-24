@@ -18,7 +18,7 @@ class CPQLayer : public AbstractLayer<Act, Select> {
     if (this->O_ % M_ > 0)
       throw std::runtime_error("O_ is not dividable by M_");
 
-    code_ = new CodeType[this->O_ * M_];
+    code_ = new CodeType[this->I_ * M_];
     dict_ = new T[M_ * Ks * D_];
     if constexpr (NQ)
       norm_ = new T[this->I_ * M_];
@@ -60,17 +60,17 @@ void CPQLayer<Act, Select, NQ, M_, Ks, CodeType>::initialize() {
 
   std::uniform_int_distribution<> codes_dist(0, Ks-1);
   CodeType* code = this->code_;
-  for (int i = 0; i < M_ * this->O_; ++i) {
+  for (int i = 0; i < M_ * this->I_; ++i) {
     *(code++) = static_cast<CodeType>(codes_dist(generator));
   }
   std::uniform_real_distribution<T > distribution(0.0, 1.0);
   if constexpr (NQ) {
     T* norm = norm_;
-    for (int i = 0; i < this->O_ * M_; ++i) {
+    for (int i = 0; i < this->I_ * M_; ++i) {
       *(norm++) = distribution(generator);
     }
   }
-// #define LEARNED_CODE_BOOK
+//  #define LEARNED_CODE_BOOK
 #ifndef LEARNED_CODE_BOOK
   T* w = dict_;
   for (int i = 0; i < M_ * Ks * D_; i++) {
@@ -180,10 +180,10 @@ SparseVector CPQLayer<Act, Select, NQ, M_, Ks, CodeType>
 #pragma unroll
     for (int m = 0; m < M_; ++m) {
       if constexpr (NQ) {
-        // *c = code[o * M_ + m] * norm_[i * M_ + m]
+        // *c = code[i * M_ + m] * norm_[i * M_ + m]
         mm += tables[m][*(c++)] *  (*(norm++));
       } else {
-        // *c = code[o * M_ + m]
+        // *c = code[i * M_ + m]
         mm += tables[m][*(c++)];
       }
     }
