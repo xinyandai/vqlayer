@@ -128,11 +128,11 @@ SparseVector CPQLayer<Act, Select, NQ, M_, Ks, CodeType>
     }
     for (int i = 0; i < x.size(); ++i) {
       T xv = x.value_[i];
-      CodeType c = code[i * M_ + m];
+      CodeType c = code[x.index_[i] * M_ + m];
       auto w = &dict[m * Ks * this->D_  + c * this->D_];
       for (int dim = 0; dim < this->D_; ++dim) {
         if constexpr (NQ)
-          result[dim] += xv * w[dim] * norm_[i * M_ + m];
+          result[dim] += xv * w[dim] * norm_[x.index_[i] * M_ + m];
         else
           result[dim] += xv * w[dim];
       }
