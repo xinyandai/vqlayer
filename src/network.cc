@@ -69,7 +69,7 @@ int Network::predict(int **input_indices, float **input_values,
                      int *lengths, int **labels, int *label_size) {
   int correct = 0;
 #ifndef DEBUG
-#pragma omp parallel for reduction(+:correctPred)
+#pragma omp parallel for reduction(+:correct)
 #endif
   for (int b = 0; b < batch_size_; ++b) {
     // construct from input
