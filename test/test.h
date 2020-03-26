@@ -8,7 +8,8 @@
 template <Activation Act, bool Select>
 class FakeLayer : public Layer<Act, Select> {
  public:
-  explicit FakeLayer(const AbstractLayer<Act, Select>& l) : Layer<Act, Select>(l.I_, l.O_) {
+  explicit FakeLayer(const AbstractLayer<Act, Select>& l)
+                   : Layer<Act, Select>(l.I_, l.O_) {
     T* w = this->weight_;
     for (int i = 0; i < this->I_; ++i) {
       for (int o = 0; o < this->O_; ++o) {
