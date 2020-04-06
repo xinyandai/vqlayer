@@ -212,34 +212,66 @@ void PQLayer<Act, Select, NQ, M_, Ks, CodeType>
   // gw[i_, o_] = x[1, i_]' g[1, o_]
   T* const dict = dict_;         // shape of [M_, Ks, D_]
   CodeType* const code = code_;  // shape of [O_, M_]
-  T * w = new T[D_];
   T lr = optimizer.lr;
 
-  for (int o = 0; o < g.size(); ++o) {
-    size_type idx = 0;
-    for (int m = 0; m < M_; ++m) {
-      size_type begin_idx = m * D_;
-      size_type end_idx = begin_idx + D_;
-      auto& c = code[g.index_[o] * M_ + m];
-      std::memcpy(w, &dict[m * Ks * D_ + c * D_], D_ * sizeof(T));
+  if (rand() % 10 != 0) {
+    for (int o = 0; o < g.size(); ++o) {
+      size_type idx = 0;
+      for (int m = 0; m < M_; ++m) {
+        size_type begin_idx = m * D_;
+        size_type end_idx = begin_idx + D_;
+        auto& c = code[g.index_[o] * M_ + m];
+        T* weight = &dict[m * Ks * D_ + c * D_];
 
-      T* norm;
-      if constexpr (NQ) {
-        norm = &norm_[g.index_[o] * M_ + m];
-        for (int dim = 0; dim < D_; ++dim) {
-          w[dim] *= *norm;
+        T* norm = nullptr;
+        T grad_norm = 0.0;
+        if constexpr (NQ) {
+          norm = &norm_[g.index_[o] * M_ + m];
+        }
+        for (; x.size() > idx && x.index_[idx] < end_idx; idx++) {
+          T grad = x.value_[idx] * g.value_[o];
+          if constexpr (NQ) {
+            grad_norm += grad * weight[x.index_[idx] - begin_idx];
+            weight[x.index_[idx] - begin_idx] -= lr * grad * *norm;
+          } else {
+            weight[x.index_[idx] - begin_idx] -= lr * grad;
+          }
+
+        }
+        if constexpr (NQ) {
+          *norm -= lr * grad_norm;
         }
       }
-      for (; x.size() > idx && x.index_[idx] < end_idx; idx++) {
-        T grad = x.value_[idx] * g.value_[o];
-        w[x.index_[idx] - begin_idx] -= lr * grad;
-      }
-      if constexpr (NQ) {
-        c = static_cast<CodeType>(nvq(norm, w, &dict[m * Ks * D_], Ks, D_));
-      } else {
-        c = static_cast<CodeType>(vq(w, &dict[m * Ks * D_], Ks, D_));
+    }
+  } else {
+    T * w = new T[D_];
+    for (int o = 0; o < g.size(); ++o) {
+      size_type idx = 0;
+      for (int m = 0; m < M_; ++m) {
+        size_type begin_idx = m * D_;
+        size_type end_idx = begin_idx + D_;
+        auto& c = code[g.index_[o] * M_ + m];
+        std::memcpy(w, &dict[m * Ks * D_ + c * D_], D_ * sizeof(T));
+
+        T* norm = nullptr;
+        if constexpr (NQ) {
+          norm = &norm_[g.index_[o] * M_ + m];
+          for (int dim = 0; dim < D_; ++dim) {
+            w[dim] *= *norm;
+          }
+        }
+        for (; x.size() > idx && x.index_[idx] < end_idx; idx++) {
+          T grad = x.value_[idx] * g.value_[o];
+          w[x.index_[idx] - begin_idx] -= lr * grad;
+        }
+        if constexpr (NQ) {
+          c = static_cast<CodeType>(nvq(norm, w, &dict[m * Ks * D_], Ks, D_));
+        } else {
+          c = static_cast<CodeType>(vq(w, &dict[m * Ks * D_], Ks, D_));
+        }
       }
     }
+    delete [] w;
   }
-  delete [] w;
+
 }

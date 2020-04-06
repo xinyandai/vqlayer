@@ -8,7 +8,7 @@
 
 Interface* create_layer(size_type I, size_type O,
                         size_type layer, size_type num_layers) {
-  const size_type THRESHOLD = 1 << 12;
+  const size_type THRESHOLD = 1 << 8;
   if (layer == num_layers - 1) {
     if (O >= THRESHOLD) {
       std::cout << "building PQLayer<SoftMax> "
