@@ -300,7 +300,8 @@ void EvalDataSVM(int numBatchesTest,  Network* _mynet, int iter){
       }
       currcount = 0;
       for (it = label.begin(); it < label.end(); it++) {
-        labels[count][currcount] = stoi(*it);
+        int l = stoi(*it);
+        labels[count][currcount] = l > 0 ?  l : 0;
         currcount++;
       }
 
@@ -402,7 +403,8 @@ void ReadDataSVM(int numBatches,  Network* _mynet, int epoch){
 
       currcount = 0;
       for (it = label.begin(); it < label.end(); it++) {
-        labels[count][currcount] = stoi(*it);
+        int l = stoi(*it);
+        labels[count][currcount] = l > 0 ?  l : 0;
         currcount++;
       }
 
@@ -445,7 +447,7 @@ int main(int argc, char* argv[])
   //***********************************
   // Parse Config File
   //***********************************
-  parseconfig(argc > 1 ? argv[1]  : "../config/mnist.cfg");
+  parseconfig(argc > 1 ? argv[1]  : "../config/rcv1.cfg");
 
   //***********************************
   // Initialize Network
@@ -489,5 +491,4 @@ int main(int argc, char* argv[])
   delete [] Sparsity;
 
   return 0;
-
 }
