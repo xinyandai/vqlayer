@@ -28,3 +28,5 @@ script:
   - ./test_vq
   - ./test_rqlayer
   - ./test_pqlayer
+  - ./test_cpqlayer
+  - ./test_hashlayer

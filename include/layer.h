@@ -7,6 +7,7 @@
 #include "layer_pq.h"
 #include "layer_rq.h"
 #include "layer_cpq.h"
+#include "layer_hash.h"
 #include "layer_interface.h"
 #include "layer_abstract.h"
 #include "layer_standard.h"
